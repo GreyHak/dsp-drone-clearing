@@ -37,7 +37,7 @@ namespace DysonSphereDroneClearing
         public static float configLimitClearingDistance = 0.4f;
         public static bool configEnableClearingWhileFlying = false;
         public static uint configReservedInventorySpace = 10;
-        public static float configReservedPower = 0.2f;
+        public static float configReservedPower = 0.4f;
         public static bool configEnableClearingItemTree = true;
         public static bool configEnableClearingItemStone = true;
         public static bool configEnableClearingItemDetail = false;
@@ -194,7 +194,7 @@ namespace DysonSphereDroneClearing
             {
                 Logger.LogInfo("Mod disabled.");
                 return;
-            }    
+            }
 
             // PlayerOrder::ReachTest, PlayerAction_Mine::GameTick
             // MechaDroneLogic::UpdateDrones -> MechaDroneLogic::Build -> PlanetFactory::BuildFinally
@@ -382,6 +382,24 @@ namespace DysonSphereDroneClearing
             for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
             {
                 activeMissions[activeMissionIdx].mineAction.DroneGameTick();
+            }
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(PrebuildData), "Export")]
+        public static bool PrebuildData_Export_Prefix(PrebuildData __instance, BinaryWriter w)
+        {
+            if (isDroneClearingPrebuild(__instance))
+            {
+                // Do not save drone clearing tasks.  This would work unless the mod
+                // gets uninstalled in which case it causes the game to issue an error.
+                //Logger.LogInfo("Preventing saving of drone clearing prebuild.");
+                PrebuildData generic = default;
+                generic.Export(w);
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
     }

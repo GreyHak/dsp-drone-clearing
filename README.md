@@ -32,6 +32,7 @@ The source code for this mod is available for download, review and forking on Gi
 ## Change Log
 ### v1.1.0 (inwork)
  - Fixed bug with drones getting locked up when Icarus completes their task first.
+ - Clearing tasks no longer save.  This is a compromise to avoid issues when disabling/removing the mod.
  - Improvement in drone usage calculation.  This provides a cleaner cut-off when clearing is shutoff due to drone count usage or energy availability.
  - Disable clearing when mecha energy level is too low (configurable).
  - Optimized mechanic for holding drone still while working.
