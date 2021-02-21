@@ -170,7 +170,23 @@ namespace DysonSphereDroneClearing
         {
             DysonSphereDroneClearing.Logger = base.Logger;  // "C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program\BepInEx\LogOutput.log"
             DysonSphereDroneClearing.Config = base.Config;
+            Config.ConfigReloaded += OnConfigReload;
 
+            // PlayerOrder::ReachTest, PlayerAction_Mine::GameTick
+            // MechaDroneLogic::UpdateDrones -> MechaDroneLogic::Build -> PlanetFactory::BuildFinally
+            // PlanetFactory::BuildFinally calls FlattenTerrain and SetSandCount.
+            harmony = new Harmony("org.greyhak.plugins.dspdroneclearing");
+            harmony.PatchAll(typeof(DysonSphereDroneClearing));
+
+            Logger.LogInfo("Initialization complete.");
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GameMain), "Begin")]
+        public static void HookGameStart() => Config.Reload();
+
+        public static void OnConfigReload(object sender, EventArgs e)
+        {
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;
             configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.  Set to 0 to effectively disables this mod.").Value;
             configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
@@ -192,19 +208,7 @@ namespace DysonSphereDroneClearing
             configEnableClearingPlanetDesert = Config.Bind<bool>("Planets", "IncludeDesert", configEnableClearingPlanetDesert, "Enable clearing on desert planets.").Value;
             configEnableClearingPlanetIce = Config.Bind<bool>("Planets", "IncludeIce", configEnableClearingPlanetIce, "Enable clearing on ice planets.").Value;
 
-            if (configMaxClearingDroneCount == 0)
-            {
-                Logger.LogInfo("Mod disabled.");
-                return;
-            }
-
-            // PlayerOrder::ReachTest, PlayerAction_Mine::GameTick
-            // MechaDroneLogic::UpdateDrones -> MechaDroneLogic::Build -> PlanetFactory::BuildFinally
-            // PlanetFactory::BuildFinally calls FlattenTerrain and SetSandCount.
-            harmony = new Harmony("org.greyhak.plugins.dspdroneclearing");
-            harmony.PatchAll(typeof(DysonSphereDroneClearing));
-
-            Logger.LogInfo("Initialization complete.");
+            Logger.LogInfo("Configuration loaded.");
         }
 
         // This patch is for compatability with Windows10CE's DSP Cheats' Instant-Build feature.

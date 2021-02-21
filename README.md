@@ -30,6 +30,8 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.x.x
+ - Reload configuration settings on each game start.
 ### v1.1.1
  - Fixed compatibility with Windows10CE's DSP Cheats's Instant-Build feature to make instant clearing.
 ### v1.1.0
