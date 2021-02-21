@@ -27,7 +27,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.1.0.0";
+        public const string pluginVersion = "1.1.1.0";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -203,6 +203,21 @@ namespace DysonSphereDroneClearing
             harmony.PatchAll(typeof(DysonSphereDroneClearing));
 
             Logger.LogInfo("Initialization complete.");
+        }
+
+        // This patch is for compatability with Windows10CE's DSP Cheats v2.2.0's Instant-Build feature.
+        [HarmonyPrefix, HarmonyPatch(typeof(PlanetFactory), "BuildFinally")]
+        public static bool PlanetFactory_BuildFinally_Prefix(Player player, int prebuildId)
+        {
+            if (player.factory != null && prebuildId != 0)
+            {
+                PrebuildData prebuildData = player.factory.prebuildPool[prebuildId];
+                if (isDroneClearingPrebuild(prebuildData))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(MechaDroneLogic), "UpdateTargets")]
