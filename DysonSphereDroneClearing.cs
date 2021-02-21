@@ -38,6 +38,7 @@ namespace DysonSphereDroneClearing
         public static bool configEnableClearingWhileFlying = false;
         public static uint configReservedInventorySpace = 10;
         public static float configReservedPower = 0.4f;
+        public static bool configEnableInstantClearing = false;
         public static bool configEnableClearingItemTree = true;
         public static bool configEnableClearingItemStone = true;
         public static bool configEnableClearingItemDetail = false;
@@ -178,6 +179,7 @@ namespace DysonSphereDroneClearing
             configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", configEnableClearingWhileFlying, "Clearing is always works while walking.  This flag can be used to also enable clearing while flying.").Value;
             configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", configReservedInventorySpace, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)").Value;
             configReservedPower = Config.Bind<float>("Config", "PowerReserve", configReservedPower, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.").Value;
+            configEnableInstantClearing = Config.Bind<bool>("Config", "DSPCheats_InstantClearing", configEnableInstantClearing, "If the DSP Cheats mod is installed, and Instant-Build is enabled, should this mod work with that one and instantly clear?").Value;
 
             configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", configEnableClearingItemTree, "Enabling clearing of trees.").Value;
             configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", configEnableClearingItemStone, "Enabling clearing of stones which can block the mecha's movement.  (This includes the space capsule at the start of a new game.)").Value;
@@ -205,15 +207,31 @@ namespace DysonSphereDroneClearing
             Logger.LogInfo("Initialization complete.");
         }
 
-        // This patch is for compatability with Windows10CE's DSP Cheats v2.2.0's Instant-Build feature.
+        // This patch is for compatability with Windows10CE's DSP Cheats' Instant-Build feature.
         [HarmonyPrefix, HarmonyPatch(typeof(PlanetFactory), "BuildFinally")]
         public static bool PlanetFactory_BuildFinally_Prefix(Player player, int prebuildId)
         {
             if (player.factory != null && prebuildId != 0)
             {
-                PrebuildData prebuildData = player.factory.prebuildPool[prebuildId];
-                if (isDroneClearingPrebuild(prebuildData))
-                {
+                PrebuildData prebuild = player.factory.prebuildPool[prebuildId];
+                if (isDroneClearingPrebuild(prebuild))
+                {   // This will never happen unless DSP Cheats' Instant-Build feature is enabled.  So, let's do what it's telling us to.
+                    if (configEnableInstantClearing)
+                    {
+                        player.factory.RemovePrebuildData(prebuildId);
+                        player.factory.RemoveVegeWithComponents(prebuild.upEntity);
+                        for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
+                        {
+                            DroneClearingMissionData missionData = activeMissions[activeMissionIdx];
+                            if (missionData.prebuildId == prebuildId)
+                            {
+                                if (missionData.mineAction.miningType == EObjectType.Entity)
+                                {
+                                    activeMissions.RemoveAt(activeMissionIdx);
+                                }
+                            }
+                        }
+                    }
                     return false;
                 }
             }

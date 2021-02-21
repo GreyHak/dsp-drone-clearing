@@ -31,7 +31,7 @@ The source code for this mod is available for download, review and forking on Gi
 
 ## Change Log
 ### v1.1.1
- - Fixed compatibility with Windows10CE's DSP Cheats's Instant-Build feature.
+ - Fixed compatibility with Windows10CE's DSP Cheats's Instant-Build feature to make instant clearing.
 ### v1.1.0
  - Fixed bug with drones getting locked up when Icarus completes their task first.
  - Clearing tasks no longer save.  This is a compromise to avoid issues when disabling/removing the mod.
