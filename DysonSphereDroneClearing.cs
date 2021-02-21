@@ -132,7 +132,7 @@ namespace DysonSphereDroneClearing
 
         public static bool isDroneClearingPrebuild(PrebuildData prebuild)
         {
-            return prebuild.protoId == -1 && prebuild.modelId == -1 && prebuild.recipeId == -1;
+            return prebuild.protoId == -1 && prebuild.modelId == 0 && prebuild.recipeId == -1;
         }
 
         public class DroneClearingMissionData
@@ -274,7 +274,7 @@ namespace DysonSphereDroneClearing
 
                     PrebuildData prebuild = default;
                     prebuild.protoId = -1;
-                    prebuild.modelId = -1;
+                    prebuild.modelId = 0;  // Saves always open as 0
                     prebuild.recipeId = -1;
                     prebuild.refCount = 0;
                     prebuild.upEntity = vegeData.id;
