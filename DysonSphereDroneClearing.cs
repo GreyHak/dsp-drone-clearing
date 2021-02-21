@@ -108,16 +108,20 @@ namespace DysonSphereDroneClearing
                         VFAudio.Create(vegeProto.MiningAudio, null, vegeData.pos, true);
                         factory.RemoveVegeWithComponents(vegeData.id);
                         GameMain.gameScenario.NotifyOnVegetableMined((int)vegeData.protoId);
-                        this.miningType = EObjectType.Entity;
+                        this.miningType = EObjectType.Entity;  // This change will cause the mission to be completed.
                         this.miningId = 0;
                         if (inventoryOverflowFlag)
                         {
+                            //Logger.LogInfo("Inventory overflow detected.");
                         }
                         this.miningTick = 0;
                     }
                 }
                 else
                 {
+                    //Logger.LogInfo("null vegeProto.  Icarus likely removed clearing target.");
+                    this.miningType = EObjectType.Entity;  // This change will cause the mission to be completed.
+                    this.miningId = 0;
                     this.miningTick = 0;
                     this.percent = 0f;
                     factory.RemoveVegeWithComponents(vegeData.id);
