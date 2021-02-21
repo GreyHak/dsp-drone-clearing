@@ -180,7 +180,7 @@ namespace DysonSphereDroneClearing
             configReservedPower = Config.Bind<float>("Config", "PowerReserve", configReservedPower, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.").Value;
 
             configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", configEnableClearingItemTree, "Enabling clearing of trees.").Value;
-            configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", configEnableClearingItemStone, "Enabling clearing of stones which can block the mecha's movement.").Value;
+            configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", configEnableClearingItemStone, "Enabling clearing of stones which can block the mecha's movement.  (This includes the space capsule at the start of a new game.)").Value;
             configEnableClearingItemDetail = Config.Bind<bool>("Items", "IncludePebbles", configEnableClearingItemDetail, "Enabling clearing of tiny stones which won't block the mecha's movement.").Value;
             configEnableClearingItemIce = Config.Bind<bool>("Items", "IncludeIce", configEnableClearingItemIce, "Enabling clearing of ice.").Value;
 
