@@ -268,13 +268,13 @@ namespace DysonSphereDroneClearing
 
                 if (getTotalDroneTaskingCount() >= configMaxClearingDroneCount)
                 {
-                    Logger.LogInfo("Skipping due to number of drone assignments.");
+                    //Logger.LogInfo("Skipping due to number of drone assignments.");
                     return;
                 }
 
                 if (___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap < configReservedPower)
                 {
-                    Logger.LogInfo("Skipping due to low power.");
+                    //Logger.LogInfo("Skipping due to low power.");
                     return;
                 }
 

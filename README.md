@@ -32,6 +32,7 @@ The source code for this mod is available for download, review and forking on Gi
 ## Change Log
 ### v1.x.x
  - Reload configuration settings on each game start.
+ - Reduced debug log messages.
 ### v1.1.1
  - Fixed compatibility with Windows10CE's DSP Cheats's Instant-Build feature to make instant clearing.
 ### v1.1.0
