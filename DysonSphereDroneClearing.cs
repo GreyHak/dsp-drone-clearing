@@ -159,7 +159,7 @@ namespace DysonSphereDroneClearing
                         {
                             totalDroneTaskCount++;
                         }
-                    }                
+                    }
                 }
             }
             return totalDroneTaskCount;
@@ -412,6 +412,12 @@ namespace DysonSphereDroneClearing
             {
                 return true;
             }
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(GameData), "Destroy")]
+        public static void GameData_Destroy_Postfix()
+        {
+            activeMissions.Clear();
         }
     }
 }
