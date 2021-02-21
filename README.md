@@ -30,7 +30,7 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
-### v1.1.0 (inwork)
+### v1.1.0
  - Fixed bug with drones getting locked up when Icarus completes their task first.
  - Clearing tasks no longer save.  This is a compromise to avoid issues when disabling/removing the mod.
  - Improvement in drone usage calculation.  This provides a cleaner cut-off when clearing is shutoff due to drone count usage or energy availability.

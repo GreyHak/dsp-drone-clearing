@@ -376,9 +376,20 @@ namespace DysonSphereDroneClearing
             }
         }
 
+        //public static long lastDisplayTime = 0;
+
         [HarmonyPostfix, HarmonyPatch(typeof(PlanetFactory), "GameTick")]
         public static void PlanetFactory_GameTick_Postfix(long time)
         {
+            /*if (time > lastDisplayTime + 30 || time < lastDisplayTime)
+            {
+                var sb = new StringBuilder();
+                sb.AppendFormat("{0} active clearing drones. {1} active missions.", getTotalDroneTaskingCount(), activeMissions.Count);
+                Logger.LogInfo(sb.ToString());
+
+                lastDisplayTime = time;
+            }*/
+
             for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
             {
                 activeMissions[activeMissionIdx].mineAction.DroneGameTick();
