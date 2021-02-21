@@ -59,50 +59,46 @@ namespace DysonSphereDroneClearing
 
             public void DroneGameTick(long timei)
             {
-                double num = 0.01666666753590107;
+                double powerFactor = 0.01666666753590107;
                 PlanetFactory factory = this.player.factory;
-                double num2 = this.player.mecha.miningPower * num;
-                double num3;
-                float num4;
-                this.player.mecha.QueryEnergy(num2, out num3, out num4);
-                int num5 = (int)(this.player.mecha.miningSpeed * num4 * 10000f + 0.49f);
+                double miningEnergyCost = this.player.mecha.miningPower * powerFactor;
+                double energyAvailable;
+                float fractionOfEnergyAvailable;
+                this.player.mecha.QueryEnergy(miningEnergyCost, out energyAvailable, out fractionOfEnergyAvailable);
+                int miningTime = (int)(this.player.mecha.miningSpeed * fractionOfEnergyAvailable * 10000f + 0.49f);
 
                 VegeData vegeData = factory.GetVegeData(this.miningId);
                 this.miningProtoId = (int)vegeData.protoId;
                 VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
                 if (vegeProto != null)
                 {
-                    this.miningTick += num5;
-                    this.player.mecha.coreEnergy -= num3;
-                    this.player.mecha.MarkEnergyChange(5, -num2);
+                    this.miningTick += miningTime;
+                    this.player.mecha.coreEnergy -= energyAvailable;
+                    this.player.mecha.MarkEnergyChange(5, -miningEnergyCost);
                     this.percent = Mathf.Clamp01((float)((double)this.miningTick / (double)(vegeProto.MiningTime * 10000)));
                     if (this.miningTick >= vegeProto.MiningTime * 10000)
                     {
                         System.Random random = new System.Random(vegeData.id + ((this.player.planetData.seed & 16383) << 14));
-                        bool flag = false;
-                        int num7 = 0;
-                        for (int i = 0; i < vegeProto.MiningItem.Length; i++)
+                        bool inventoryOverflowFlag = false;
+                        int popupQueueIndex = 0;
+                        for (int itemIdx = 0; itemIdx < vegeProto.MiningItem.Length; itemIdx++)
                         {
-                            float num8 = (float)random.NextDouble();
-                            if (num8 < vegeProto.MiningChance[i])
+                            float randomMiningChance = (float)random.NextDouble();
+                            if (randomMiningChance < vegeProto.MiningChance[itemIdx])
                             {
-                                int num9 = vegeProto.MiningItem[i];
-                                int num10 = (int)((float)vegeProto.MiningCount[i] * (vegeData.scl.y * vegeData.scl.y) + 0.5f);
-                                if (num10 > 0 && LDB.items.Select(num9) != null)
+                                int minedItem = vegeProto.MiningItem[itemIdx];
+                                int minedItemCount = (int)((float)vegeProto.MiningCount[itemIdx] * (vegeData.scl.y * vegeData.scl.y) + 0.5f);
+                                if (minedItemCount > 0 && LDB.items.Select(minedItem) != null)
                                 {
-                                    int num11 = this.player.package.AddItemStacked(num9, num10);
-                                    if (num11 != 0)
+                                    int inventoryOverflowCount = this.player.package.AddItemStacked(minedItem, minedItemCount);
+                                    if (inventoryOverflowCount != 0)
                                     {
-                                        UIItemup.Up(num9, num11);
-                                        UIRealtimeTip.PopupItemGet(num9, num11, vegeData.pos + vegeData.pos.normalized, num7++);
+                                        UIItemup.Up(minedItem, inventoryOverflowCount);
+                                        UIRealtimeTip.PopupItemGet(minedItem, inventoryOverflowCount, vegeData.pos + vegeData.pos.normalized, popupQueueIndex++);
                                     }
-                                    else
+                                    else  // Unable to fit all items
                                     {
-                                        flag = true;
-                                    }
-                                    if (num11 != num10)
-                                    {
-                                        UIRealtimeTip.PopupAhead("无法获得采集物品".Translate(), true, 0);
+                                        inventoryOverflowFlag = true;
                                     }
                                 }
                             }
@@ -113,10 +109,8 @@ namespace DysonSphereDroneClearing
                         GameMain.gameScenario.NotifyOnVegetableMined((int)vegeData.protoId);
                         this.miningType = EObjectType.Entity;
                         this.miningId = 0;
-                        if (flag)
+                        if (inventoryOverflowFlag)
                         {
-                            Logger.LogInfo("Issuing abort");
-                            this.player.AbortOrder();
                         }
                         this.miningTick = 0;
                     }
@@ -179,7 +173,6 @@ namespace DysonSphereDroneClearing
             // PlanetFactory::BuildFinally calls FlattenTerrain and SetSandCount.
             harmony = new Harmony("org.greyhak.plugins.dspdroneclearing");
             harmony.PatchAll(typeof(DysonSphereDroneClearing));
-            //harmony.PatchAll(typeof(DroneAction_Mine));
 
             Logger.LogInfo("Initialization complete.");
         }
