@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("DSP Drone Clearing")]
-[assembly: AssemblyDescription("Mode for Dyson Sphere Program will use mecha drones to clear trees and stones.")]
+[assembly: AssemblyDescription("Mod for Dyson Sphere Program will use mecha drones to clear trees and stones.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("DSP Drone Clearing")]
