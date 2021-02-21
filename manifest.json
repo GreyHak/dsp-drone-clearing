@@ -1,0 +1,9 @@
+{
+    "name": "DSP_Drone_Clearing",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/GreyHak/dsp-drone-clearing",
+    "description": "Mod for Dyson Sphere Program will use mecha drones to clear trees and stones.",
+    "dependencies": [
+        "xiaoye97-BepInEx-5.4.5"
+    ]
+}

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("DysonSphereDroneClearing")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("DSP Drone Clearing")]
+[assembly: AssemblyDescription("Mode for Dyson Sphere Program will use mecha drones to clear trees and stones.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DysonSphereDroneClearing")]
+[assembly: AssemblyProduct("DSP Drone Clearing")]
 [assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

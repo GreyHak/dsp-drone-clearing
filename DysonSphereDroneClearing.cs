@@ -34,7 +34,9 @@ namespace DysonSphereDroneClearing
 
         public static bool configCollectResourcesFlag = true;
         public static uint configMaxClearingDroneCount = Mecha.kMaxDroneCount;
-        public static float configLimitClearingDistance = 0.3f;
+        public static float configLimitClearingDistance = 0.4f;
+        public static bool configEnableClearingWhileFlying = false;
+        public static uint configReservedInventorySpace = 10;
         public static bool configEnableClearingItemTree = true;
         public static bool configEnableClearingItemStone = true;
         public static bool configEnableClearingItemDetail = false;
@@ -149,9 +151,11 @@ namespace DysonSphereDroneClearing
 
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;
             configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.  Set to 0 to disable this mod.").Value;
-            configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.").Value;
+            configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
             configLimitClearingDistance = Math.Min(configLimitClearingDistance, 1.0f);
             configLimitClearingDistance = Math.Max(configLimitClearingDistance, 0.0f);
+            configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", configEnableClearingWhileFlying, "Clearing is always works while walking.  This flag can be used to also enable clearing while flying.").Value;
+            configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", configReservedInventorySpace, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)").Value;
 
             configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", configEnableClearingItemTree, "Enabling clearing of trees.").Value;
             configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", configEnableClearingItemStone, "Enabling clearing of stones which can block the mecha's movement.").Value;
@@ -184,19 +188,41 @@ namespace DysonSphereDroneClearing
         public static void MechaDroneLogic_UpdateTargets_Prefix(MechaDroneLogic __instance, Player ___player)
         {
             if (___player.factory != null &&
-                ___player.movementState == EMovementState.Walk &&
+                (___player.movementState == EMovementState.Walk ||
+                ___player.movementState == EMovementState.Fly) &&
                 ___player.mecha.droneCount - ___player.mecha.idleDroneCount < configMaxClearingDroneCount &&
-                //___player.mecha.idleDroneCount == ___player.mecha.droneCount &&
                 ___player.mecha.coreEnergy > ___player.mecha.droneEjectEnergy)
             {
-                if ((___player.planetData.type == EPlanetType.None && !configEnableClearingPlanetGeneric) ||
-                     (___player.planetData.type == EPlanetType.Vocano && !configEnableClearingPlanetVocano) ||
-                     (___player.planetData.type == EPlanetType.Ocean && !configEnableClearingPlanetOcean) ||
-                     (___player.planetData.type == EPlanetType.Desert && !configEnableClearingPlanetDesert) ||
-                     (___player.planetData.type == EPlanetType.Ice && !configEnableClearingPlanetIce) )
+                if (___player.movementState == EMovementState.Fly && !configEnableClearingWhileFlying)
                 {
-                    Logger.LogInfo("Skipping planet type " + ___player.planetData.type.ToString());
+                    //Logger.LogInfo("Skipping while flying.");
                     return;
+                }
+                if ((___player.planetData.type == EPlanetType.None && !configEnableClearingPlanetGeneric) ||
+                    (___player.planetData.type == EPlanetType.Vocano && !configEnableClearingPlanetVocano) ||
+                    (___player.planetData.type == EPlanetType.Ocean && !configEnableClearingPlanetOcean) ||
+                    (___player.planetData.type == EPlanetType.Desert && !configEnableClearingPlanetDesert) ||
+                    (___player.planetData.type == EPlanetType.Ice && !configEnableClearingPlanetIce))
+                {
+                    //Logger.LogInfo("Skipping planet type " + ___player.planetData.type.ToString());
+                    return;
+                }
+
+                if (configCollectResourcesFlag)  // ... check configReservedInventorySpace
+                {
+                    uint numEmptyInventorySlots = 0;
+                    for (int gridIdx = 0; gridIdx < ___player.package.size; ++gridIdx)
+                    {
+                        if (___player.package.grids[gridIdx].count == 0)
+                        {
+                            numEmptyInventorySlots++;
+                        }
+                    }
+                    if (numEmptyInventorySlots < configReservedInventorySpace)
+                    {
+                        //Logger.LogInfo("Too few inventory slots");
+                        return;
+                    }
                 }
 
                 float closestVegeDistance = ___player.mecha.buildArea * configLimitClearingDistance * 2;
@@ -207,10 +233,10 @@ namespace DysonSphereDroneClearing
                     // vegeProto.Type == EVegeType.Detail covers grass and small minable rocks.  So the check includes vegeProto.MiningItem.Length instead.
                     if (vegeProto != null && vegeProto.MiningItem.Length > 0)
                     {
-                        if ( (vegeProto.Type == EVegeType.Tree && !configEnableClearingItemTree) ||
-                             (vegeProto.Type == EVegeType.Stone && !configEnableClearingItemStone) ||
-                             (vegeProto.Type == EVegeType.Detail && !configEnableClearingItemDetail) ||
-                             (vegeProto.Type == EVegeType.Ice && !configEnableClearingItemIce) )
+                        if ((vegeProto.Type == EVegeType.Tree && !configEnableClearingItemTree) ||
+                            (vegeProto.Type == EVegeType.Stone && !configEnableClearingItemStone) ||
+                            (vegeProto.Type == EVegeType.Detail && !configEnableClearingItemDetail) ||
+                            (vegeProto.Type == EVegeType.Ice && !configEnableClearingItemIce))
                         {
                             continue;
                         }
@@ -242,9 +268,9 @@ namespace DysonSphereDroneClearing
                     VegeData vegeData = ___player.factory.vegePool[closestVegeId];
                     VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
 
-                    var sb = new StringBuilder();
-                    sb.AppendFormat("Initiating mining of {0} {1}", vegeProto.Type.ToString(), LDB.items.Select(vegeProto.MiningItem[0]).name);
-                    Logger.LogInfo(sb.ToString());
+                    //var sb = new StringBuilder();
+                    //sb.AppendFormat("Initiating mining of {0} {1}", vegeProto.Type.ToString(), LDB.items.Select(vegeProto.MiningItem[0]).name);
+                    //Logger.LogInfo(sb.ToString());
 
                     PrebuildData prebuild = default;
                     prebuild.protoId = -1;
