@@ -37,6 +37,7 @@ namespace DysonSphereDroneClearing
         public static float configLimitClearingDistance = 0.4f;
         public static bool configEnableClearingWhileFlying = false;
         public static uint configReservedInventorySpace = 10;
+        public static float configReservedPower = 0.2f;
         public static bool configEnableClearingItemTree = true;
         public static bool configEnableClearingItemStone = true;
         public static bool configEnableClearingItemDetail = false;
@@ -57,7 +58,7 @@ namespace DysonSphereDroneClearing
             public int miningId;
             public int miningTick;
 
-            public void DroneGameTick(long timei)
+            public void DroneGameTick()
             {
                 double powerFactor = 0.01666666753590107;
                 PlanetFactory factory = this.player.factory;
@@ -138,18 +139,41 @@ namespace DysonSphereDroneClearing
         }
         static List<DroneClearingMissionData> activeMissions = new List<DroneClearingMissionData> { };
 
+        public static int getTotalDroneTaskingCount()
+        {
+            int totalDroneTaskCount = 0;
+            if (GameMain.mainPlayer != null &&
+                GameMain.mainPlayer.factory != null)  // A null GameMain.mainPlayer.factory is normal during the load screen.
+            {
+                totalDroneTaskCount = GameMain.mainPlayer.mecha.droneLogic.serving.Count;
+
+                for (int i = 1; i < GameMain.mainPlayer.factory.prebuildCursor; i++)
+                {
+                    if (GameMain.mainPlayer.factory.prebuildPool[i].id == i)
+                    {
+                        if (!GameMain.mainPlayer.mecha.droneLogic.serving.Contains(-i))
+                        {
+                            totalDroneTaskCount++;
+                        }
+                    }                
+                }
+            }
+            return totalDroneTaskCount;
+        }
+
         public void Awake()
         {
             DysonSphereDroneClearing.Logger = base.Logger;  // "C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program\BepInEx\LogOutput.log"
             DysonSphereDroneClearing.Config = base.Config;
 
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;
-            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.  Set to 0 to disable this mod.").Value;
+            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.  Set to 0 to effectively disables this mod.").Value;
             configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
             configLimitClearingDistance = Math.Min(configLimitClearingDistance, 1.0f);
             configLimitClearingDistance = Math.Max(configLimitClearingDistance, 0.0f);
             configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", configEnableClearingWhileFlying, "Clearing is always works while walking.  This flag can be used to also enable clearing while flying.").Value;
             configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", configReservedInventorySpace, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)").Value;
+            configReservedPower = Config.Bind<float>("Config", "PowerReserve", configReservedPower, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.").Value;
 
             configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", configEnableClearingItemTree, "Enabling clearing of trees.").Value;
             configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", configEnableClearingItemStone, "Enabling clearing of stones which can block the mecha's movement.").Value;
@@ -201,6 +225,18 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
+                if (getTotalDroneTaskingCount() >= configMaxClearingDroneCount)
+                {
+                    Logger.LogInfo("Skipping due to number of drone assignments.");
+                    return;
+                }
+
+                if (___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap < configReservedPower)
+                {
+                    Logger.LogInfo("Skipping due to low power.");
+                    return;
+                }
+
                 if (configCollectResourcesFlag)  // ... check configReservedInventorySpace
                 {
                     uint numEmptyInventorySlots = 0;
@@ -240,7 +276,7 @@ namespace DysonSphereDroneClearing
                             bool vegeBeingProcessedFlag = false;
                             foreach (PrebuildData prebuild in ___player.factory.prebuildPool)
                             {
-                                if (prebuild.upEntity == vegeData.id)
+                                if (isDroneClearingPrebuild(prebuild) && prebuild.upEntity == vegeData.id)
                                 {
                                     vegeBeingProcessedFlag = true;
                                     break;
@@ -262,7 +298,7 @@ namespace DysonSphereDroneClearing
                     VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
 
                     //var sb = new StringBuilder();
-                    //sb.AppendFormat("Initiating mining of {0} {1}", vegeProto.Type.ToString(), LDB.items.Select(vegeProto.MiningItem[0]).name);
+                    //sb.AppendFormat("Initiating mining of {0} to get {1} at power level {2}", vegeProto.Type.ToString(), LDB.items.Select(vegeProto.MiningItem[0]).name, ___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap);
                     //Logger.LogInfo(sb.ToString());
 
                     PrebuildData prebuild = default;
@@ -274,7 +310,7 @@ namespace DysonSphereDroneClearing
                     prebuild.pos = prebuild.pos2 = ___player.controller.actionBuild.previewPose.position + ___player.controller.actionBuild.previewPose.rotation * vegeData.pos;
                     prebuild.rot = vegeData.rot;
 
-                    // This operation will cause a drone to be assigned.
+                    // This operation will cause a drone to be assigned by MechaDroneLogic::UpdateTargets.
                     int prebuildId = ___player.factory.AddPrebuildData(prebuild);
                 }
             }
@@ -297,9 +333,6 @@ namespace DysonSphereDroneClearing
                         missionData = activeMissions[activeMissionIdx];
                         if (missionData.prebuildId == prebuildId)
                         {
-                            __instance.forward = missionData.forward;
-                            __instance.position = missionData.position;
-
                             if (missionData.mineAction.miningType == EObjectType.Entity)
                             {
                                 // Clearing completed
@@ -344,7 +377,7 @@ namespace DysonSphereDroneClearing
         {
             for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
             {
-                activeMissions[activeMissionIdx].mineAction.DroneGameTick(time);
+                activeMissions[activeMissionIdx].mineAction.DroneGameTick();
             }
         }
     }

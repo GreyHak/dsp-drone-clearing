@@ -10,6 +10,7 @@ Settings include
  - Collect resources, or quickly clear the area.
  - Limit the number of drones used when clearing.
  - Control of clearing distance from mecha.
+ - Conserve energy when Icarus' energy gets too low.
  - Clearing during walking and optionally while flying.
  - Inventory space limitations.
  - Control over clearing of rocks, trees, small rocks and ice.
@@ -29,5 +30,9 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.1.0 (inwork)
+ - Improvement in drone usage calculation.  This provides a cleaner cut-off when clearing is shutoff due to drone count usage or energy availability.
+ - Disable clearing when mecha energy level is too low (configurable).
+ - Optimized mechanic for holding drone still while working.
 ### v1.0.0
  - Initial release.
