@@ -28,7 +28,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.0.0";
+        public const string pluginVersion = "1.2.1.0";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -240,23 +240,23 @@ namespace DysonSphereDroneClearing
 
             // Draw a plane like the one re[resending drones in the Mecha Panel...
             for (int x = 9; x <= 17; x++)
-                for (int y = 3; y < 38; y++)
+                for (int y = 3; y <= 38; y++)
                     tex.SetPixel(x, y, color);
 
             for (int x = 15; x <= 23; x++)
-                for (int y = 12; y < 38; y++)
+                for (int y = 12; y <= 38; y++)
                     tex.SetPixel(x, y, color);
 
             for (int x = 21; x <= 29; x++)
-                for (int y = 18; y < 38; y++)
+                for (int y = 18; y <= 38; y++)
                     tex.SetPixel(x, y, color);
 
             for (int x = 27; x <= 35; x++)
-                for (int y = 24; y < 38; y++)
+                for (int y = 24; y <= 38; y++)
                     tex.SetPixel(x, y, color);
 
             for (int x = 33; x <= 44; x++)
-                for (int y = 33 - 3; y < 38; y++)
+                for (int y = 33 - 3; y <= 38; y++)
                     tex.SetPixel(x, y, color);
 
             tex.name = "greyhak-clearing-enable-icon";
@@ -330,7 +330,6 @@ namespace DysonSphereDroneClearing
                 ___player.factory != null &&
                 (___player.movementState == EMovementState.Walk ||
                 ___player.movementState == EMovementState.Fly) &&
-                ___player.mecha.droneCount - ___player.mecha.idleDroneCount < configMaxClearingDroneCount &&
                 ___player.mecha.coreEnergy > ___player.mecha.droneEjectEnergy)
             {
                 if (___player.movementState == EMovementState.Fly && !configEnableClearingWhileFlying)
@@ -348,9 +347,12 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (getTotalDroneTaskingCount() >= configMaxClearingDroneCount)
+                if (getTotalDroneTaskingCount() >= Math.Min(configMaxClearingDroneCount, ___player.mecha.droneCount))
                 {
-                    //Logger.LogInfo("Skipping due to number of drone assignments.");
+                    //var sbc = new StringBuilder();
+                    //sbc.AppendFormat("Skipping due to number of drone assignments: configMaxClearingDroneCount={0}, player.mecha.droneCount={1}, player.mecha.idleDroneCount={2}",
+                    //    configMaxClearingDroneCount, ___player.mecha.droneCount, ___player.mecha.idleDroneCount);
+                    //Logger.LogInfo(sbc.ToString());
                     return;
                 }
 
