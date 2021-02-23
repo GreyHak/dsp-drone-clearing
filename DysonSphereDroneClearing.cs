@@ -234,30 +234,26 @@ namespace DysonSphereDroneClearing
         public static Sprite GetSprite(Color color)
         {
             Texture2D tex = new Texture2D(48, 48, TextureFormat.RGBA32, false);
-            for (int x = 0; x < 48; x++)
-                for (int y = 0; y < 48; y++)
-                    tex.SetPixel(x, y, new Color(0, 0, 0, 0));
 
             // Draw a plane like the one re[resending drones in the Mecha Panel...
-            for (int x = 9; x <= 17; x++)
-                for (int y = 3; y <= 38; y++)
-                    tex.SetPixel(x, y, color);
-
-            for (int x = 15; x <= 23; x++)
-                for (int y = 12; y <= 38; y++)
-                    tex.SetPixel(x, y, color);
-
-            for (int x = 21; x <= 29; x++)
-                for (int y = 18; y <= 38; y++)
-                    tex.SetPixel(x, y, color);
-
-            for (int x = 27; x <= 35; x++)
-                for (int y = 24; y <= 38; y++)
-                    tex.SetPixel(x, y, color);
-
-            for (int x = 33; x <= 44; x++)
-                for (int y = 33 - 3; y <= 38; y++)
-                    tex.SetPixel(x, y, color);
+            for (int x = 0; x < 48; x++)
+            {
+                for (int y = 0; y < 48; y++)
+                {
+                    if (((x >= 9) && (x <= 17) && (y >= 2) && (y <= 38)) ||
+                        ((x >= 15) && (x <= 23) && (y >= 12) && (y <= 38)) ||
+                        ((x >= 21) && (x <= 29) && (y >= 18) && (y <= 38)) ||
+                        ((x >= 27) && (x <= 35) && (y >= 24) && (y <= 38)) ||
+                        ((x >= 33) && (x <= 44) && (y >= 30) && (y <= 38)))
+                    {
+                        tex.SetPixel(x, y, color);
+                    }
+                    else
+                    {
+                        tex.SetPixel(x, y, new Color(0, 0, 0, 0));
+                    }
+                }
+            }
 
             tex.name = "greyhak-clearing-enable-icon";
             tex.Apply();
