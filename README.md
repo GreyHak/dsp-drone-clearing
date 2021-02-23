@@ -36,6 +36,9 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### Next
+ - Replaced deprecated function call.
+ - Manifest description updated.
 ### v1.2.1
  - Fixed a bug where tasks were being assigned when drones weren't available.  This was causing configured energy constraints to be violated.  This issue was emphasized when fewer drones were available.
  - Small revision to the appearance of the enable/disable HUD image.

@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
 
-        public static bool configEnableMod = true;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableMod;
         public static bool configCollectResourcesFlag = true;
         public static uint configMaxClearingDroneCount = Mecha.kMaxDroneCount;
         public static float configLimitClearingDistance = 0.4f;
@@ -202,11 +202,11 @@ namespace DysonSphereDroneClearing
                 Vector3 referencePosition = GameObject.Find("Game Menu/button-1-bg").GetComponent<RectTransform>().localPosition;
                 enableDisableButton = GameObject.Instantiate<RectTransform>(prefab);
                 enableDisableButton.gameObject.name = "greyhak-clearing-enable-button";
-                enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
-                enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod ? "Click to disable drone clearing" : "Click to enable drone clearing";
+                enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod.Value ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
+                enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod.Value ? "Click to disable drone clearing" : "Click to enable drone clearing";
                 enableDisableButton.GetComponent<UIButton>().tips.delay = 0f;
                 enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
-                    configEnableMod ? enabledSprite : disabledSprite;
+                    configEnableMod.Value ? enabledSprite : disabledSprite;
                 enableDisableButton.SetParent(parent);
                 enableDisableButton.localScale = new Vector3(0.35f, 0.35f, 0.35f);
                 enableDisableButton.localPosition = new Vector3(referencePosition.x + 96f, referencePosition.y + 161f, referencePosition.z);
@@ -214,18 +214,16 @@ namespace DysonSphereDroneClearing
                 enableDisableButton.GetComponent<UIButton>().OnPointerEnter(null);
                 enableDisableButton.GetComponent<UIButton>().button.onClick.AddListener(() =>
                 {
-                    configEnableMod = !DysonSphereDroneClearing.configEnableMod;
-                    Config.GetSetting<bool>("Config", "Enable").Value = configEnableMod;
-
-                    if (!configEnableMod)
+                    configEnableMod.Value = !configEnableMod.Value;
+                    if (!configEnableMod.Value)
                     {
                         clearDroneTaskingOnNextTick = true;
                     }
 
-                    enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
-                    enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod ? "Click to disable drone clearing" : "Click to enable drone clearing";
+                    enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod.Value ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
+                    enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod.Value ? "Click to disable drone clearing" : "Click to enable drone clearing";
                     enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
-                        configEnableMod ? enabledSprite : disabledSprite;
+                        configEnableMod.Value ? enabledSprite : disabledSprite;
                     enableDisableButton.GetComponent<UIButton>().UpdateTip();
                 });
             }
@@ -263,7 +261,7 @@ namespace DysonSphereDroneClearing
 
         public static void OnConfigReload(object sender, EventArgs e)
         {
-            configEnableMod = Config.Bind<bool>("Config", "Enable", configEnableMod, "Enable/disable drone clearing mod.").Value;
+            configEnableMod = Config.Bind<bool>("Config", "Enable", true, "Enable/disable drone clearing mod.");
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;
             configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.").Value;
             configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
@@ -322,7 +320,7 @@ namespace DysonSphereDroneClearing
         [HarmonyPrefix, HarmonyPatch(typeof(MechaDroneLogic), "UpdateTargets")]
         public static void MechaDroneLogic_UpdateTargets_Prefix(MechaDroneLogic __instance, Player ___player)
         {
-            if (configEnableMod &&
+            if (configEnableMod.Value &&
                 ___player.factory != null &&
                 (___player.movementState == EMovementState.Walk ||
                 ___player.movementState == EMovementState.Fly) &&
