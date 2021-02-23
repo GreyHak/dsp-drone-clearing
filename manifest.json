@@ -1,6 +1,6 @@
 {
     "name": "DSP_Drone_Clearing",
-    "version_number": "1.1.1",
+    "version_number": "1.2.0",
     "website_url": "https://github.com/GreyHak/dsp-drone-clearing",
     "description": "Mod will use mecha drones to clear trees and stones.",
     "dependencies": [

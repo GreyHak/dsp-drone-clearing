@@ -7,6 +7,7 @@ This mod will use mecha drones to clear trees and stones.  Ever get annoyed trip
 ## Config File
 
 Settings include
+ - Mod enable flag.
  - Collect resources, or quickly clear the area.
  - Limit the number of drones used when clearing.
  - Control of clearing distance from mecha.
@@ -30,7 +31,9 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
-### v1.x.x
+### v1.2.0
+ - Added a button to the game HUD to enable and disable drone clearing.
+ - Added a config setting to explicitly enable or disable the mod.
  - Reload configuration settings on each game start.
  - Reduced debug log messages.
 ### v1.1.1

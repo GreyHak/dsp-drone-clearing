@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using BepInEx;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
 using System.IO;
 using BepInEx.Logging;
 using System.Security;
@@ -27,11 +28,12 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.1.1.0";
+        public const string pluginVersion = "1.2.0.0";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
 
+        public static bool configEnableMod = true;
         public static bool configCollectResourcesFlag = true;
         public static uint configMaxClearingDroneCount = Mecha.kMaxDroneCount;
         public static float configLimitClearingDistance = 0.4f;
@@ -142,7 +144,7 @@ namespace DysonSphereDroneClearing
             public Vector3 position;
             public DroneAction_Mine mineAction = null;
         }
-        static List<DroneClearingMissionData> activeMissions = new List<DroneClearingMissionData> { };
+        public static List<DroneClearingMissionData> activeMissions = new List<DroneClearingMissionData> { };
 
         public static int getTotalDroneTaskingCount()
         {
@@ -178,17 +180,96 @@ namespace DysonSphereDroneClearing
             harmony = new Harmony("org.greyhak.plugins.dspdroneclearing");
             harmony.PatchAll(typeof(DysonSphereDroneClearing));
 
+            enabledSprite = GetSprite(new Color(0, 1, 0));  // Bright Green
+            disabledSprite = GetSprite(new Color(0.5f, 0.5f, 0.5f));  // Medium Grey
+
             Logger.LogInfo("Initialization complete.");
         }
 
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(GameMain), "Begin")]
-        public static void HookGameStart() => Config.Reload();
+        public static RectTransform enableDisableButton;
+        public static Sprite enabledSprite;
+        public static Sprite disabledSprite;
+        public static bool clearDroneTaskingOnNextTick = false;
+
+        [HarmonyPrefix, HarmonyPatch(typeof(GameMain), "Begin")]
+        public static void GameMain_Begin_Prefix()
+        {
+            Config.Reload();
+            if (GameMain.instance != null && GameObject.Find("Game Menu/button-1-bg") && !GameObject.Find("greyhak-clearing-enable-button"))
+            {
+                RectTransform parent = GameObject.Find("Game Menu").GetComponent<RectTransform>();
+                RectTransform prefab = GameObject.Find("Game Menu/button-1-bg").GetComponent<RectTransform>();
+                Vector3 referencePosition = GameObject.Find("Game Menu/button-1-bg").GetComponent<RectTransform>().localPosition;
+                enableDisableButton = GameObject.Instantiate<RectTransform>(prefab);
+                enableDisableButton.gameObject.name = "greyhak-clearing-enable-button";
+                enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
+                enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod ? "Click to disable drone clearing" : "Click to enable drone clearing";
+                enableDisableButton.GetComponent<UIButton>().tips.delay = 0f;
+                enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
+                    configEnableMod ? enabledSprite : disabledSprite;
+                enableDisableButton.SetParent(parent);
+                enableDisableButton.localScale = new Vector3(0.35f, 0.35f, 0.35f);
+                enableDisableButton.localPosition = new Vector3(referencePosition.x + 96f, referencePosition.y + 161f, referencePosition.z);
+                enableDisableButton.GetComponent<UIButton>().OnPointerDown(null);
+                enableDisableButton.GetComponent<UIButton>().OnPointerEnter(null);
+                enableDisableButton.GetComponent<UIButton>().button.onClick.AddListener(() =>
+                {
+                    configEnableMod = !DysonSphereDroneClearing.configEnableMod;
+                    Config.GetSetting<bool>("Config", "Enable").Value = configEnableMod;
+
+                    if (!configEnableMod)
+                    {
+                        clearDroneTaskingOnNextTick = true;
+                    }
+
+                    enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
+                    enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod ? "Click to disable drone clearing" : "Click to enable drone clearing";
+                    enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
+                        configEnableMod ? enabledSprite : disabledSprite;
+                    enableDisableButton.GetComponent<UIButton>().UpdateTip();
+                });
+            }
+        }
+
+        public static Sprite GetSprite(Color color)
+        {
+            Texture2D tex = new Texture2D(48, 48, TextureFormat.RGBA32, false);
+            for (int x = 0; x < 48; x++)
+                for (int y = 0; y < 48; y++)
+                    tex.SetPixel(x, y, new Color(0, 0, 0, 0));
+
+            // Draw a plane like the one re[resending drones in the Mecha Panel...
+            for (int x = 9; x <= 17; x++)
+                for (int y = 3; y < 38; y++)
+                    tex.SetPixel(x, y, color);
+
+            for (int x = 15; x <= 23; x++)
+                for (int y = 12; y < 38; y++)
+                    tex.SetPixel(x, y, color);
+
+            for (int x = 21; x <= 29; x++)
+                for (int y = 18; y < 38; y++)
+                    tex.SetPixel(x, y, color);
+
+            for (int x = 27; x <= 35; x++)
+                for (int y = 24; y < 38; y++)
+                    tex.SetPixel(x, y, color);
+
+            for (int x = 33; x <= 44; x++)
+                for (int y = 33 - 3; y < 38; y++)
+                    tex.SetPixel(x, y, color);
+
+            tex.name = "greyhak-clearing-enable-icon";
+            tex.Apply();
+
+            return Sprite.Create(tex, new Rect(0f, 0f, 48f, 48f), new Vector2(0f, 0f), 1000);
+        }
 
         public static void OnConfigReload(object sender, EventArgs e)
         {
+            configEnableMod = Config.Bind<bool>("Config", "Enable", configEnableMod, "Enable/disable drone clearing mod.").Value;
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;
-            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.  Set to 0 to effectively disables this mod.").Value;
+            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.").Value;
             configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
             configLimitClearingDistance = Math.Min(configLimitClearingDistance, 1.0f);
             configLimitClearingDistance = Math.Max(configLimitClearingDistance, 0.0f);
@@ -245,7 +326,8 @@ namespace DysonSphereDroneClearing
         [HarmonyPrefix, HarmonyPatch(typeof(MechaDroneLogic), "UpdateTargets")]
         public static void MechaDroneLogic_UpdateTargets_Prefix(MechaDroneLogic __instance, Player ___player)
         {
-            if (___player.factory != null &&
+            if (configEnableMod &&
+                ___player.factory != null &&
                 (___player.movementState == EMovementState.Walk ||
                 ___player.movementState == EMovementState.Fly) &&
                 ___player.mecha.droneCount - ___player.mecha.idleDroneCount < configMaxClearingDroneCount &&
@@ -418,6 +500,19 @@ namespace DysonSphereDroneClearing
         [HarmonyPostfix, HarmonyPatch(typeof(PlanetFactory), "GameTick")]
         public static void PlanetFactory_GameTick_Postfix(long time)
         {
+            if (clearDroneTaskingOnNextTick)
+            {
+                clearDroneTaskingOnNextTick = false;
+                foreach (PrebuildData prebuild in GameMain.mainPlayer.factory.prebuildPool)
+                {
+                    if (isDroneClearingPrebuild(prebuild))
+                    {
+                        GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                    }
+                }
+                activeMissions.Clear();
+            }
+
             /*if (time > lastDisplayTime + 30 || time < lastDisplayTime)
             {
                 var sb = new StringBuilder();
