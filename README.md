@@ -9,6 +9,8 @@ Enable and disable the clearing functionality in-game with this toggle button on
 
 ## Config File
 
+Configuration settings or loaded when you game is loaded.  So if you want to change the settings file, quit the game, but don't exit to desktop, then continue your game.
+
 Settings include
  - Mod enable flag.
  - Collect resources, or quickly clear the area.
