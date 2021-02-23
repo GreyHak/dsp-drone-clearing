@@ -37,7 +37,7 @@ The source code for this mod is available for download, review and forking on Gi
 
 ## Change Log
 ### v1.2.1
- - Fixed a bug where tasks were being assigned when drones wheren't available.  This was causing configured energy constraints to be violated.  This issue was emphasized when fewer drones were available.
+ - Fixed a bug where tasks were being assigned when drones weren't available.  This was causing configured energy constraints to be violated.  This issue was emphasized when fewer drones were available.
  - Small revision to the appearance of the enable/disable HUD image.
 ### v1.2.0
  - Added a button to the game HUD to enable and disable drone clearing.
