@@ -4,6 +4,9 @@
 
 This mod will use mecha drones to clear trees and stones.  Ever get annoyed tripping over rocks?  This mod is for you.
 
+Enable and disable the clearing functionality in-game with this toggle button on your HUD.
+![EnableDisableButton.jpg](https://raw.githubusercontent.com/GreyHak/dsp-drone-clearing/master/EnableDisableButton.jpg)
+
 ## Config File
 
 Settings include
