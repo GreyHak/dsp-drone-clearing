@@ -28,7 +28,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.1.0";
+        public const string pluginVersion = "1.2.2.0";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -172,6 +172,7 @@ namespace DysonSphereDroneClearing
         {
             DysonSphereDroneClearing.Logger = base.Logger;  // "C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program\BepInEx\LogOutput.log"
             DysonSphereDroneClearing.Config = base.Config;
+            OnConfigReload();
             Config.ConfigReloaded += OnConfigReload;
 
             // PlayerOrder::ReachTest, PlayerAction_Mine::GameTick
@@ -260,6 +261,11 @@ namespace DysonSphereDroneClearing
         }
 
         public static void OnConfigReload(object sender, EventArgs e)
+        {
+            OnConfigReload();
+        }
+
+        public static void OnConfigReload()
         {
             configEnableMod = Config.Bind<bool>("Config", "Enable", true, "Enable/disable drone clearing mod.");
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;

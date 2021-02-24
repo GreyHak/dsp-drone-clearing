@@ -36,7 +36,8 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
-### Next
+### v1.2.2
+ - Fixed bug when loading the game with the mod for the first time.  (Bug added in v1.2.0 with the config reload functionality.)
  - Replaced deprecated function call.
  - Manifest description updated.
 ### v1.2.1
