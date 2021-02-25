@@ -36,6 +36,8 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.4
+ - Improved compatibility with the Render Distance mod.
 ### v1.2.3
  - Added a config option to enable more debug to the BepInEx console.
 ### v1.2.2

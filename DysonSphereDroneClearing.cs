@@ -28,7 +28,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.3";
+        public const string pluginVersion = "1.2.4";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -66,6 +66,11 @@ namespace DysonSphereDroneClearing
             {
                 double powerFactor = 0.01666666753590107;
                 PlanetFactory factory = this.player.factory;
+                if (factory == null)
+                {
+                    // This has only been seen briefly when the Render Distance mod is transitioning to or from a planet view.
+                    return;
+                }
                 double miningEnergyCost = this.player.mecha.miningPower * powerFactor;
                 double energyAvailable;
                 float fractionOfEnergyAvailable;
@@ -330,6 +335,15 @@ namespace DysonSphereDroneClearing
         {
             if (___player.factory != null)
             {
+                if (GameMain.data.hidePlayerModel)
+                {
+                    if (configEnableDebug)
+                    {
+                        Logger.LogInfo("Skipping because player model is hidden.  This is needed for compatability with the Render Distance mod.");
+                    }
+                    return;
+                }
+
                 if (!configEnableMod.Value)
                 {
                     if (configEnableDebug)
