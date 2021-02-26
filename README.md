@@ -36,6 +36,8 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.5
+ - Major bug fixed which was causing drone clearing tasks to go unassigned causing drone clearing to stop.
 ### v1.2.4
  - Improved compatibility with the Render Distance mod.
 ### v1.2.3

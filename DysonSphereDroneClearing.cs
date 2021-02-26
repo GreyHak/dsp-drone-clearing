@@ -19,7 +19,12 @@ using UnityEngine.UI;
 using System.IO;
 using BepInEx.Logging;
 using System.Security;
+//using System.Security.Permissions;
 
+//[module: UnverifiableCode]
+//#pragma warning disable CS0618 // Type or member is obsolete
+//[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+//#pragma warning restore CS0618 // Type or member is obsolete
 namespace DysonSphereDroneClearing
 {
     [BepInPlugin(pluginGuid, pluginName, pluginVersion)]
@@ -28,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.4";
+        public const string pluginVersion = "1.2.5";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -166,9 +171,14 @@ namespace DysonSphereDroneClearing
                     {
                         if (!GameMain.mainPlayer.mecha.droneLogic.serving.Contains(-i))
                         {
-                            totalDroneTaskCount++;
+                            totalDroneTaskCount++;  // These are queued, but not yet assigned
                         }
                     }
+                }
+
+                if (configEnableDebug)
+                {
+                    Logger.LogInfo(totalDroneTaskCount.ToString() + " tasked drone count made up of " + GameMain.mainPlayer.mecha.droneLogic.serving.Count.ToString() + " assigned and " + (totalDroneTaskCount - GameMain.mainPlayer.mecha.droneLogic.serving.Count).ToString() + " unassigned drones.");
                 }
             }
             return totalDroneTaskCount;
@@ -393,13 +403,14 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (getTotalDroneTaskingCount() >= Math.Min(configMaxClearingDroneCount, ___player.mecha.droneCount))
+                int totalDroneTaskingCount = getTotalDroneTaskingCount();
+                if (totalDroneTaskingCount >= Math.Min(configMaxClearingDroneCount, ___player.mecha.droneCount))
                 {
                     if (configEnableDebug)
                     {
                         var sbc = new StringBuilder();
-                        sbc.AppendFormat("Skipping due to number of drone assignments: configMaxClearingDroneCount={0}, player.mecha.droneCount={1}, player.mecha.idleDroneCount={2}",
-                            configMaxClearingDroneCount, ___player.mecha.droneCount, ___player.mecha.idleDroneCount);
+                        sbc.AppendFormat("Skipping due to number of drone assignments: totalDroneTaskingCount={0}, configMaxClearingDroneCount={1}, player.mecha.droneCount={2}, player.mecha.idleDroneCount={3}",
+                            totalDroneTaskingCount, configMaxClearingDroneCount, ___player.mecha.droneCount, ___player.mecha.idleDroneCount);
                         Logger.LogInfo(sbc.ToString());
                     }
                     return;
@@ -487,7 +498,7 @@ namespace DysonSphereDroneClearing
                     prebuild.recipeId = -1;
                     prebuild.refCount = 0;
                     prebuild.upEntity = vegeData.id;
-                    prebuild.pos = prebuild.pos2 = ___player.controller.actionBuild.previewPose.position + ___player.controller.actionBuild.previewPose.rotation * vegeData.pos;
+                    prebuild.pos = prebuild.pos2 = vegeData.pos;
                     prebuild.rot = vegeData.rot;
 
                     // This operation will cause a drone to be assigned by MechaDroneLogic::UpdateTargets.
@@ -579,7 +590,7 @@ namespace DysonSphereDroneClearing
                 if (time > lastDisplayTime + 30 || time < lastDisplayTime)
                 {
                     var sb = new StringBuilder();
-                    sb.AppendFormat("{0} active clearing drones. {1} active missions.", getTotalDroneTaskingCount(), activeMissions.Count);
+                    sb.AppendFormat("{0} drone tasks. {1} active missions.", getTotalDroneTaskingCount(), activeMissions.Count);
                     Logger.LogInfo(sb.ToString());
 
                     lastDisplayTime = time;
