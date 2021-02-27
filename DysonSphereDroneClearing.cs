@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.5";
+        public const string pluginVersion = "1.2.6";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -42,7 +42,9 @@ namespace DysonSphereDroneClearing
         public static bool configCollectResourcesFlag = true;
         public static uint configMaxClearingDroneCount = Mecha.kMaxDroneCount;
         public static float configLimitClearingDistance = 0.4f;
+        public static bool configEnableClearingWhileDrifting = true;
         public static bool configEnableClearingWhileFlying = false;
+        public static bool configEnableRecallWhileFlying = true;
         public static uint configReservedInventorySpace = 10;
         public static float configReservedPower = 0.4f;
         public static bool configEnableInstantClearing = false;
@@ -238,12 +240,17 @@ namespace DysonSphereDroneClearing
                     }
 
                     enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod.Value ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
-                    enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod.Value ? "Click to disable drone clearing" : "Click to enable drone clearing";
                     enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
                         configEnableMod.Value ? enabledSprite : disabledSprite;
-                    enableDisableButton.GetComponent<UIButton>().UpdateTip();
+                    UpdateTipText("");
                 });
             }
+        }
+
+        public static void UpdateTipText(String details)
+        {
+            enableDisableButton.GetComponent<UIButton>().tips.tipText = (configEnableMod.Value ? "Click to disable drone clearing" : "Click to enable drone clearing") + "\n" + details;
+            enableDisableButton.GetComponent<UIButton>().UpdateTip();
         }
 
         public static Sprite GetSprite(Color color)
@@ -289,7 +296,9 @@ namespace DysonSphereDroneClearing
             configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
             configLimitClearingDistance = Math.Min(configLimitClearingDistance, 1.0f);
             configLimitClearingDistance = Math.Max(configLimitClearingDistance, 0.0f);
-            configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", configEnableClearingWhileFlying, "Clearing is always works while walking.  This flag can be used to also enable clearing while flying.").Value;
+            configEnableClearingWhileDrifting = Config.Bind<bool>("Config", "ClearWhileDrifting", configEnableClearingWhileDrifting, "This flag can be used to enable/disable clearing while drifing over oceans.").Value;
+            configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", configEnableClearingWhileFlying, "This flag can be used to enable/disable clearing while flying.").Value;
+            configEnableRecallWhileFlying = Config.Bind<bool>("Config", "RecallWhileFlying", configEnableRecallWhileFlying, "Enable this feature if you want drones assigned to clearing to be recalled when Icarus is flying. (This setting is only used if configEnableClearingWhileFlying is false.)").Value;
             configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", configReservedInventorySpace, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)").Value;
             configReservedPower = Config.Bind<float>("Config", "PowerReserve", configReservedPower, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.").Value;
             configEnableInstantClearing = Config.Bind<bool>("Config", "DSPCheats_InstantClearing", configEnableInstantClearing, "If the DSP Cheats mod is installed, and Instant-Build is enabled, should this mod work with that one and instantly clear?").Value;
@@ -351,6 +360,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping because player model is hidden.  This is needed for compatability with the Render Distance mod.");
                     }
+                    UpdateTipText("(Player hidden.)");
                     return;
                 }
 
@@ -369,27 +379,45 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping because of insufficient mecha energy to eject a drone.");
                     }
+                    UpdateTipText("(Waiting for ejection energy.)");
                     return;
                 }
 
-                if (___player.movementState != EMovementState.Walk &&
-                    ___player.movementState != EMovementState.Fly)
+                if (___player.movementState == EMovementState.Sail)
                 {
                     if (configEnableDebug)
                     {
-                        Logger.LogInfo("Skipping because movement state is not Walk or Fly.");
+                        Logger.LogInfo("Skipping because movement state is Sail.");
                     }
+                    UpdateTipText("(Waiting while Sailing.)");
+                    return;
+                }
+
+                if (___player.movementState == EMovementState.Drift && !configEnableClearingWhileDrifting)
+                {
+                    if (configEnableDebug)
+                    {
+                        Logger.LogInfo("Skipping while drifting.");
+                    }
+                    UpdateTipText("(Waiting while Drifting.)");
                     return;
                 }
 
                 if (___player.movementState == EMovementState.Fly && !configEnableClearingWhileFlying)
                 {
-                    if (configEnableDebug)
+                    if (configEnableRecallWhileFlying)
+                    {
+                        Logger.LogInfo("Recalling drones.");
+                        RecallClearingDrones();
+                    }
+                    else if (configEnableDebug)
                     {
                         Logger.LogInfo("Skipping while flying.");
                     }
+                    UpdateTipText("(Waiting while Flying.)");
                     return;
                 }
+
                 if ((___player.planetData.type == EPlanetType.None && !configEnableClearingPlanetGeneric) ||
                     (___player.planetData.type == EPlanetType.Vocano && !configEnableClearingPlanetVocano) ||
                     (___player.planetData.type == EPlanetType.Ocean && !configEnableClearingPlanetOcean) ||
@@ -400,6 +428,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping planet type " + ___player.planetData.type.ToString());
                     }
+                    UpdateTipText("(Waiting on this planet type.)");
                     return;
                 }
 
@@ -413,6 +442,7 @@ namespace DysonSphereDroneClearing
                             totalDroneTaskingCount, configMaxClearingDroneCount, ___player.mecha.droneCount, ___player.mecha.idleDroneCount);
                         Logger.LogInfo(sbc.ToString());
                     }
+                    UpdateTipText("(Available drones assigned.)");
                     return;
                 }
 
@@ -422,6 +452,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping due to low power.");
                     }
+                    UpdateTipText("(Waiting for energy.)");
                     return;
                 }
 
@@ -441,6 +472,7 @@ namespace DysonSphereDroneClearing
                         {
                             Logger.LogInfo("Too few inventory slots");
                         }
+                        UpdateTipText("(Waiting for inventory space.)");
                         return;
                     }
                 }
@@ -503,10 +535,15 @@ namespace DysonSphereDroneClearing
 
                     // This operation will cause a drone to be assigned by MechaDroneLogic::UpdateTargets.
                     int prebuildId = ___player.factory.AddPrebuildData(prebuild);
+                    UpdateTipText("(Assigning drones.)");
                 }
-                else if (configEnableDebug)
+                else
                 {
-                    Logger.LogInfo("No enabled items within configured distance.");
+                    if (configEnableDebug)
+                    {
+                        Logger.LogInfo("No enabled items within configured distance.");
+                    }
+                    UpdateTipText("(No more items in range.)");
                 }
             }
         }
@@ -567,6 +604,17 @@ namespace DysonSphereDroneClearing
             }
         }
 
+        public static void RecallClearingDrones()
+        {
+            foreach (PrebuildData prebuild in GameMain.mainPlayer.factory.prebuildPool)
+            {
+                if (isDroneClearingPrebuild(prebuild))
+                {
+                    GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                }
+            }
+        }
+
         public static long lastDisplayTime = 0;
 
         [HarmonyPostfix, HarmonyPatch(typeof(PlanetFactory), "GameTick")]
@@ -575,13 +623,7 @@ namespace DysonSphereDroneClearing
             if (clearDroneTaskingOnNextTick)
             {
                 clearDroneTaskingOnNextTick = false;
-                foreach (PrebuildData prebuild in GameMain.mainPlayer.factory.prebuildPool)
-                {
-                    if (isDroneClearingPrebuild(prebuild))
-                    {
-                        GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
-                    }
-                }
+                RecallClearingDrones();
                 activeMissions.Clear();
             }
 

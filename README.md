@@ -7,6 +7,10 @@ This mod will use mecha drones to clear trees and stones.  Ever get annoyed trip
 Enable and disable the clearing functionality in-game with this toggle button on your HUD.
 ![EnableDisableButton.jpg](https://raw.githubusercontent.com/GreyHak/dsp-drone-clearing/master/EnableDisableButton.jpg)
 
+If you like this mod, please click the thumbs up at the [top of the page](https://dsp.thunderstore.io/package/GreyHak/DSP_Drone_Clearing/) (next to the Total rating).  That would be a nice thank you for me, and help other people to find a mod you enjoy.
+
+If you have issues with this mod, please report them on [GitHub](https://github.com/GreyHak/dsp-drone-clearing/issues).  I try to respond within 12 hours.
+
 ## Config File
 
 Configuration settings or loaded when you game is loaded.  So if you want to change the settings file, quit the game, but don't exit to desktop, then continue your game.
@@ -17,7 +21,8 @@ Settings include
  - Limit the number of drones used when clearing.
  - Control of clearing distance from mecha.
  - Conserve energy when Icarus' energy gets too low.
- - Clearing during walking and optionally while flying.
+ - Clearing during walking and optionally while flying and drifting (floating over ocean).
+ - Optionally recall drones tasked with clearing when Icarus starts flying.
  - Inventory space limitations.
  - Control over clearing of rocks, trees, small rocks and ice.
  - Control over planet types clearing is performed on.
@@ -36,6 +41,10 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.6
+ - Added config settings for ClearWhileDrifting and RecallWhileFlying.
+ - Added tasking status to tool tip for enable/disable button.
+ - Added bug report link to this README.
 ### v1.2.5
  - Major bug fixed which was causing drone clearing tasks to go unassigned causing drone clearing to stop.
 ### v1.2.4
