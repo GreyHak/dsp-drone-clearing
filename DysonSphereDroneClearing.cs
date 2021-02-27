@@ -398,7 +398,10 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableRecallWhileFlying)
                     {
-                        Logger.LogInfo("Recalling drones.");
+                        if (configEnableDebug)
+                        {
+                            Logger.LogInfo("Recalling drones.");
+                        }
                         RecallClearingDrones();
                     }
                     else if (configEnableDebug)
@@ -614,6 +617,7 @@ namespace DysonSphereDroneClearing
                     GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
                 }
             }
+            activeMissions.Clear();
         }
 
         public static long lastDisplayTime = 0;
@@ -625,7 +629,6 @@ namespace DysonSphereDroneClearing
             {
                 clearDroneTaskingOnNextTick = false;
                 RecallClearingDrones();
-                activeMissions.Clear();
             }
 
             if (configEnableDebug)
