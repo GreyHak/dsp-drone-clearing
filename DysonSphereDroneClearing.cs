@@ -249,7 +249,7 @@ namespace DysonSphereDroneClearing
 
         public static void UpdateTipText(String details)
         {
-            enableDisableButton.GetComponent<UIButton>().tips.tipText = (configEnableMod.Value ? "Click to disable drone clearing" : "Click to enable drone clearing") + "\n" + details;
+            enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod.Value ? "Click to disable drone clearing" + "\n" + details : "Click to enable drone clearing";
             enableDisableButton.GetComponent<UIButton>().UpdateTip();
         }
 
@@ -373,16 +373,6 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (___player.mecha.coreEnergy < ___player.mecha.droneEjectEnergy)
-                {
-                    if (configEnableDebug)
-                    {
-                        Logger.LogInfo("Skipping because of insufficient mecha energy to eject a drone.");
-                    }
-                    UpdateTipText("(Waiting for ejection energy.)");
-                    return;
-                }
-
                 if (___player.movementState == EMovementState.Sail)
                 {
                     if (configEnableDebug)
@@ -390,6 +380,7 @@ namespace DysonSphereDroneClearing
                         Logger.LogInfo("Skipping because movement state is Sail.");
                     }
                     UpdateTipText("(Waiting while Sailing.)");
+                    RecallClearingDrones();
                     return;
                 }
 
@@ -415,6 +406,16 @@ namespace DysonSphereDroneClearing
                         Logger.LogInfo("Skipping while flying.");
                     }
                     UpdateTipText("(Waiting while Flying.)");
+                    return;
+                }
+
+                if (___player.mecha.coreEnergy < ___player.mecha.droneEjectEnergy)
+                {
+                    if (configEnableDebug)
+                    {
+                        Logger.LogInfo("Skipping because of insufficient mecha energy to eject a drone.");
+                    }
+                    UpdateTipText("(Waiting for ejection energy.)");
                     return;
                 }
 

@@ -43,6 +43,7 @@ The source code for this mod is available for download, review and forking on Gi
 ## Change Log
 ### v1.2.6
  - Added config settings for ClearWhileDrifting and RecallWhileFlying.
+ - Drone performing clearing tasks will automatically be recalled when Icarus starts sailing.
  - Added tasking status to tool tip for enable/disable button.
  - Added bug report link to this README.
 ### v1.2.5
