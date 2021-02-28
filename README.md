@@ -26,7 +26,7 @@ Settings include
  - Inventory space limitations.
  - Control over clearing of rocks, trees, small rocks and ice.
  - Control over planet types clearing is performed on.
- - Slow down the drone clearing.
+ - Control the drone clearing speed.  Default is to clear at Icarus' mining speed.
 
 The configuration file is called greyhak.dysonsphereprogram.droneclearing.cfg.  It is generated the first time you run the game with this mod installed.  On Windows 10 it is located at
 "%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg".  
@@ -44,7 +44,7 @@ The source code for this mod is available for download, review and forking on Gi
 ## Change Log
 ### v1.2.8
  - Fixed a bug which was making the drones mine too fast, 4 times faster in the later game.  The speed was correct early game.
- - Added config setting to slow the drones down when they're clearing.
+ - Added config setting to control the drone clearing speed, faster or slower.  If you got used to the drones clearing too quickly, you can restore that functionality.
 ### v1.2.7
  - Bug fixed with disabling plugin while off a planet in open space.
 ### v1.2.6
