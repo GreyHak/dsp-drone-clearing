@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.6";
+        public const string pluginVersion = "1.2.7";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -610,11 +610,14 @@ namespace DysonSphereDroneClearing
 
         public static void RecallClearingDrones()
         {
-            foreach (PrebuildData prebuild in GameMain.mainPlayer.factory.prebuildPool)
+            if (GameMain.mainPlayer.factory != null)
             {
-                if (isDroneClearingPrebuild(prebuild))
+                foreach (PrebuildData prebuild in GameMain.mainPlayer.factory.prebuildPool)
                 {
-                    GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                    if (isDroneClearingPrebuild(prebuild))
+                    {
+                        GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                    }
                 }
             }
             activeMissions.Clear();

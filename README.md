@@ -41,11 +41,13 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.7
+ - Bug fixed with disabling plugin while off a planet in open space.
 ### v1.2.6
  - Added config settings for ClearWhileDrifting and RecallWhileFlying.
  - Drone performing clearing tasks will automatically be recalled when Icarus starts sailing.
  - Added tasking status to tool tip for enable/disable button.
- - Added bug report link to this README.
+ - Added bug reporting link to this README.
 ### v1.2.5
  - Major bug fixed which was causing drone clearing tasks to go unassigned causing drone clearing to stop.
 ### v1.2.4
