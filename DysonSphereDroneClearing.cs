@@ -630,8 +630,8 @@ namespace DysonSphereDroneClearing
 
         public static long lastDisplayTime = 0;
 
-        [HarmonyPostfix, HarmonyPatch(typeof(PlanetFactory), "GameTick")]
-        public static void PlanetFactory_GameTick_Postfix(long time)
+        [HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), "GameTick")]
+        public static void PlayerAction_Mine_GameTick_Postfix(long timei)
         {
             if (clearDroneTaskingOnNextTick)
             {
@@ -641,13 +641,13 @@ namespace DysonSphereDroneClearing
 
             if (configEnableDebug)
             {
-                if (time > lastDisplayTime + 30 || time < lastDisplayTime)
+                if (timei > lastDisplayTime + 30 || timei < lastDisplayTime)
                 {
                     var sb = new StringBuilder();
                     sb.AppendFormat("{0} drone tasks. {1} active missions.", getTotalDroneTaskingCount(), activeMissions.Count);
                     Logger.LogInfo(sb.ToString());
 
-                    lastDisplayTime = time;
+                    lastDisplayTime = timei;
                 }
             }
 

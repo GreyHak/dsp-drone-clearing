@@ -43,6 +43,7 @@ The source code for this mod is available for download, review and forking on Gi
 
 ## Change Log
 ### v1.2.8
+ - Fixed a bug which was making the drones mine too fast, 4 times faster in the later game.  The speed was correct early game.
  - Added config setting to slow the drones down when they're clearing.
 ### v1.2.7
  - Bug fixed with disabling plugin while off a planet in open space.
