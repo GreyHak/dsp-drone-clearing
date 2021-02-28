@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.7";
+        public const string pluginVersion = "1.2.8";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -47,6 +47,7 @@ namespace DysonSphereDroneClearing
         public static bool configEnableRecallWhileFlying = true;
         public static uint configReservedInventorySpace = 10;
         public static float configReservedPower = 0.4f;
+        public static float configSpeedScaleFactor = 1.0f;
         public static bool configEnableInstantClearing = false;
         public static bool configEnableDebug = false;
         public static bool configEnableClearingItemTree = true;
@@ -69,6 +70,7 @@ namespace DysonSphereDroneClearing
             public int miningId;
             public int miningTick;
 
+            // This function is based on PlayerAction_Mine.GameTick
             public void DroneGameTick()
             {
                 double powerFactor = 0.01666666753590107;
@@ -82,7 +84,7 @@ namespace DysonSphereDroneClearing
                 double energyAvailable;
                 float fractionOfEnergyAvailable;
                 this.player.mecha.QueryEnergy(miningEnergyCost, out energyAvailable, out fractionOfEnergyAvailable);
-                int miningTime = (int)(this.player.mecha.miningSpeed * fractionOfEnergyAvailable * 10000f + 0.49f);
+                int miningTime = (int)(this.player.mecha.miningSpeed * configSpeedScaleFactor * fractionOfEnergyAvailable * 10000f + 0.49f);
 
                 VegeData vegeData = factory.GetVegeData(this.miningId);
                 this.miningProtoId = (int)vegeData.protoId;
@@ -193,9 +195,9 @@ namespace DysonSphereDroneClearing
             OnConfigReload();
             Config.ConfigReloaded += OnConfigReload;
 
-            // PlayerOrder::ReachTest, PlayerAction_Mine::GameTick
-            // MechaDroneLogic::UpdateDrones -> MechaDroneLogic::Build -> PlanetFactory::BuildFinally
-            // PlanetFactory::BuildFinally calls FlattenTerrain and SetSandCount.
+            // PlayerOrder.ReachTest, PlayerAction_Mine.GameTick
+            // MechaDroneLogic.UpdateDrones -> MechaDroneLogic.Build -> PlanetFactory.BuildFinally
+            // PlanetFactory.BuildFinally calls FlattenTerrain and SetSandCount.
             harmony = new Harmony(pluginGuid);
             harmony.PatchAll(typeof(DysonSphereDroneClearing));
 
@@ -301,6 +303,9 @@ namespace DysonSphereDroneClearing
             configEnableRecallWhileFlying = Config.Bind<bool>("Config", "RecallWhileFlying", configEnableRecallWhileFlying, "Enable this feature if you want drones assigned to clearing to be recalled when Icarus is flying. (This setting is only used if configEnableClearingWhileFlying is false.)").Value;
             configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", configReservedInventorySpace, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)").Value;
             configReservedPower = Config.Bind<float>("Config", "PowerReserve", configReservedPower, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.").Value;
+            configSpeedScaleFactor = Config.Bind<float>("Config", "SpeedScale", configSpeedScaleFactor, "Is this mod so great that it feels too much like cheating?  Slow the drones down with this setting.  They normally operate at the same speed as Icarus.  Min 0.0, Max 1.0").Value;
+            configSpeedScaleFactor = Math.Min(configSpeedScaleFactor, 1.0f);
+            configSpeedScaleFactor = Math.Max(configSpeedScaleFactor, 0.0f);
             configEnableInstantClearing = Config.Bind<bool>("Config", "DSPCheats_InstantClearing", configEnableInstantClearing, "If the DSP Cheats mod is installed, and Instant-Build is enabled, should this mod work with that one and instantly clear?").Value;
             configEnableDebug = Config.Bind<bool>("Config", "EnableDebug", configEnableDebug, "Enabling debug will add more feedback to the BepInEx console.  This includes the reasons why drones are not clearing.").Value;
 
@@ -537,7 +542,7 @@ namespace DysonSphereDroneClearing
                     prebuild.pos = prebuild.pos2 = vegeData.pos;
                     prebuild.rot = vegeData.rot;
 
-                    // This operation will cause a drone to be assigned by MechaDroneLogic::UpdateTargets.
+                    // This operation will cause a drone to be assigned by MechaDroneLogic.UpdateTargets.
                     int prebuildId = ___player.factory.AddPrebuildData(prebuild);
                     UpdateTipText("(Assigning drones.)");
                 }

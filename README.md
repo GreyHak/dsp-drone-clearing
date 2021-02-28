@@ -26,6 +26,7 @@ Settings include
  - Inventory space limitations.
  - Control over clearing of rocks, trees, small rocks and ice.
  - Control over planet types clearing is performed on.
+ - Slow down the drone clearing.
 
 The configuration file is called greyhak.dysonsphereprogram.droneclearing.cfg.  It is generated the first time you run the game with this mod installed.  On Windows 10 it is located at
 "%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg".  
@@ -41,6 +42,8 @@ This mod can also be installed using ebkr's [r2modman dsp](https://dsp.thunderst
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-csv-gen) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.8
+ - Added config setting to slow the drones down when they're clearing.
 ### v1.2.7
  - Bug fixed with disabling plugin while off a planet in open space.
 ### v1.2.6
