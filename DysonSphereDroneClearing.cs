@@ -202,6 +202,8 @@ namespace DysonSphereDroneClearing
             harmony.PatchAll(typeof(DysonSphereDroneClearing));
 
             enabledSprite = GetSprite(new Color(0, 1, 0));  // Bright Green
+            //Sprite ingameDrone = Resources.Load<Sprite>("ui/textures/sprites/icons/drone-icon");
+            //enabledSprite = GameObject.Instantiate<Sprite>(ingameDrone);
             disabledSprite = GetSprite(new Color(0.5f, 0.5f, 0.5f));  // Medium Grey
 
             Logger.LogInfo("Initialization complete.");
@@ -259,7 +261,8 @@ namespace DysonSphereDroneClearing
         {
             Texture2D tex = new Texture2D(48, 48, TextureFormat.RGBA32, false);
 
-            // Draw a plane like the one re[resending drones in the Mecha Panel...
+            // Draw a plane like the one representing drones in the Mecha Panel...
+            // The in-game asset is called ui/textures/sprites/icons/drone-icon
             for (int x = 0; x < 48; x++)
             {
                 for (int y = 0; y < 48; y++)
