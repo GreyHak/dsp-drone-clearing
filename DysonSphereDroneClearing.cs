@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.9";
+        public const string pluginVersion = "1.2.10";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -657,6 +657,8 @@ namespace DysonSphereDroneClearing
                     }
                 }
             }
+            foreach (DroneClearingMissionData mission in activeMissions)
+                mission.miningTargetGizmo.Close();
             activeMissions.Clear();
         }
 
@@ -711,6 +713,8 @@ namespace DysonSphereDroneClearing
         [HarmonyPostfix, HarmonyPatch(typeof(GameData), "Destroy")]
         public static void GameData_Destroy_Postfix()
         {
+            foreach (DroneClearingMissionData mission in activeMissions)
+                mission.miningTargetGizmo.Close();
             activeMissions.Clear();
         }
     }

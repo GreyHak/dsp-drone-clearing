@@ -41,6 +41,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.10
+ - Bug fix to progress circle not clearing when drone tasking is cancelled.
 ### v1.2.9
  - Added progress circle like when Icarus mines rocks and trees.
 ### v1.2.8
