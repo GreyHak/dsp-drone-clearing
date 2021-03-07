@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.8";
+        public const string pluginVersion = "1.2.9";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -158,6 +158,12 @@ namespace DysonSphereDroneClearing
             public Vector3 forward;
             public Vector3 position;
             public DroneAction_Mine mineAction = null;
+            public CircleGizmo miningTargetGizmo = null;
+
+            ~DroneClearingMissionData()
+            {
+                miningTargetGizmo.Close();
+            }
         }
         public static List<DroneClearingMissionData> activeMissions = new List<DroneClearingMissionData> { };
 
@@ -190,8 +196,8 @@ namespace DysonSphereDroneClearing
 
         public void Awake()
         {
-            DysonSphereDroneClearing.Logger = base.Logger;  // "C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program\BepInEx\LogOutput.log"
-            DysonSphereDroneClearing.Config = base.Config;
+            Logger = base.Logger;  // "C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program\BepInEx\LogOutput.log"
+            Config = base.Config;
             OnConfigReload();
             Config.ConfigReloaded += OnConfigReload;
 
@@ -592,16 +598,43 @@ namespace DysonSphereDroneClearing
 
                     if (configCollectResourcesFlag)
                     {
-                        missionData = new DroneClearingMissionData();
-                        missionData.prebuildId = prebuildId;
-                        missionData.forward = __instance.forward;
-                        missionData.position = __instance.position;
-                        missionData.mineAction = new DroneAction_Mine();
-                        missionData.mineAction.player = GameMain.mainPlayer;
-                        missionData.mineAction.miningType = EObjectType.Vegetable;
-                        missionData.mineAction.miningId = prebuild.upEntity;
-                        missionData.mineAction.miningTick = 0;
-                        activeMissions.Add(missionData);
+                        VegeData vegeData = factory.vegePool[prebuild.upEntity];
+                        if (vegeData.id == 0)
+                        {
+                            Logger.LogDebug("Item already mined.");
+                            factory.RemovePrebuildData(prebuildId);
+                        }
+                        else
+                        {
+                            missionData = new DroneClearingMissionData
+                            {
+                                prebuildId = prebuildId,
+                                forward = __instance.forward,
+                                position = __instance.position,
+                                mineAction = new DroneAction_Mine
+                                {
+                                    player = GameMain.mainPlayer,
+                                    miningType = EObjectType.Vegetable,
+                                    miningId = prebuild.upEntity,
+                                    miningTick = 0
+                                }
+                            };
+
+                            // Reference PlayerContrGizmo.SetMiningTarget
+
+                            VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
+                            missionData.miningTargetGizmo = CircleGizmo.Create(3, vegeData.pos, vegeProto.CircleRadius * 1.19f);
+                            missionData.miningTargetGizmo.multiplier = 2.5f;
+                            missionData.miningTargetGizmo.alphaMultiplier = 1f;
+                            missionData.miningTargetGizmo.fadeInScale = 1.3f;
+                            missionData.miningTargetGizmo.fadeInTime = 0.13f;
+                            missionData.miningTargetGizmo.fadeInFalloff = 0.5f;
+                            missionData.miningTargetGizmo.color = Configs.builtin.gizmoColors[2];
+                            missionData.miningTargetGizmo.rotateSpeed = 0f;
+                            missionData.miningTargetGizmo.Open();
+
+                            activeMissions.Add(missionData);
+                        }
                     }
                     else
                     {
@@ -653,9 +686,10 @@ namespace DysonSphereDroneClearing
                 }
             }
 
-            for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
+            foreach (DroneClearingMissionData mission in activeMissions)
             {
-                activeMissions[activeMissionIdx].mineAction.DroneGameTick();
+                mission.mineAction.DroneGameTick();
+                mission.miningTargetGizmo.percent = 1f - mission.mineAction.percent;
             }
         }
 
