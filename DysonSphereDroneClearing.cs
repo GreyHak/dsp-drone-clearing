@@ -159,11 +159,6 @@ namespace DysonSphereDroneClearing
             public Vector3 position;
             public DroneAction_Mine mineAction = null;
             public CircleGizmo miningTargetGizmo = null;
-
-            ~DroneClearingMissionData()
-            {
-                miningTargetGizmo.Close();
-            }
         }
         public static List<DroneClearingMissionData> activeMissions = new List<DroneClearingMissionData> { };
 
@@ -351,6 +346,7 @@ namespace DysonSphereDroneClearing
                             {
                                 if (missionData.mineAction.miningType == EObjectType.Entity)
                                 {
+                                    missionData.miningTargetGizmo.Close();
                                     activeMissions.RemoveAt(activeMissionIdx);
                                 }
                             }
@@ -585,6 +581,7 @@ namespace DysonSphereDroneClearing
                             if (missionData.mineAction.miningType == EObjectType.Entity)
                             {
                                 // Clearing completed
+                                missionData.miningTargetGizmo.Close();
                                 activeMissions.RemoveAt(activeMissionIdx);
                                 factory.RemovePrebuildData(prebuildId);
                             }
