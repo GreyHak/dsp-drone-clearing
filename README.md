@@ -5,7 +5,7 @@
 This mod will use mecha drones to clear trees and stones.  Ever get annoyed tripping over rocks?  This mod is for you.
 
 Enable and disable the clearing functionality in-game with this toggle button on your HUD.
-![EnableDisableButton.jpg](https://raw.githubusercontent.com/GreyHak/dsp-drone-clearing/master/EnableDisableButton.jpg)
+![Enable Disable Button image](https://raw.githubusercontent.com/GreyHak/dsp-drone-clearing/master/EnableDisableButton.jpg)
 
 If you like this mod, please click the thumbs up at the [top of the page](https://dsp.thunderstore.io/package/GreyHak/DSP_Drone_Clearing/) (next to the Total rating).  That would be a nice thank you for me, and help other people to find a mod you enjoy.
 
@@ -31,7 +31,7 @@ Settings include
 The configuration file is called `greyhak.dysonsphereprogram.droneclearing.cfg`.  It is generated the first time you run the game with this mod installed.  On Windows 10 it is located at `%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg`.
 
 ## Installation
-This mod uses the BepInEx mod plugin framework.  So BepInEx must be installed to use this mod.  Find details for installing BepInEx [in their user guide](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html#installing-bepinex-1).  This mod was tested with BepInEx x64 5.4.5.0 and Dyson Sphere Program 0.6.16.5827 on Windows 10.
+This mod uses the BepInEx mod plugin framework.  So BepInEx must be installed to use this mod.  Find details for installing BepInEx [in their user guide](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html#installing-bepinex-1).  This mod was tested with BepInEx x64 5.4.5.0 and Dyson Sphere Program 0.6.16.5831 on Windows 10.
 
 To manually install this mod, add the `DysonSphereDroneClearing.dll` to your `%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\plugins\` folder.
 
@@ -41,6 +41,9 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.11
+ - Ability to enable/disable clearing of the space capsule separately from stones.  This is important when using the CollectResources=false setting so key early-game resources aren't lost.
+ - Greater configurability as to which planet types to enable clearing on.
 ### v1.2.10
  - Bug fix to progress circle not clearing when drone tasking is cancelled.
 ### v1.2.9

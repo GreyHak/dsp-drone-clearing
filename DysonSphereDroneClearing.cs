@@ -19,6 +19,7 @@ using UnityEngine.UI;
 using System.IO;
 using BepInEx.Logging;
 using System.Security;
+using System.Reflection;
 //using System.Security.Permissions;
 
 //[module: UnverifiableCode]
@@ -33,32 +34,42 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.10";
+        public const string pluginVersion = "1.2.11";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
 
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableMod;
-        public static bool configCollectResourcesFlag = true;
-        public static uint configMaxClearingDroneCount = Mecha.kMaxDroneCount;
-        public static float configLimitClearingDistance = 0.4f;
-        public static bool configEnableClearingWhileDrifting = true;
-        public static bool configEnableClearingWhileFlying = false;
-        public static bool configEnableRecallWhileFlying = true;
-        public static uint configReservedInventorySpace = 10;
-        public static float configReservedPower = 0.4f;
-        public static float configSpeedScaleFactor = 1.0f;
-        public static bool configEnableInstantClearing = false;
-        public static bool configEnableDebug = false;
-        public static bool configEnableClearingItemTree = true;
-        public static bool configEnableClearingItemStone = true;
-        public static bool configEnableClearingItemDetail = false;
-        public static bool configEnableClearingItemIce = true;
-        public static bool configEnableClearingPlanetGeneric = true;
-        public static bool configEnableClearingPlanetVocano = true;
-        public static bool configEnableClearingPlanetOcean = true;
-        public static bool configEnableClearingPlanetDesert = true;
-        public static bool configEnableClearingPlanetIce = true;
+        public static BepInEx.Configuration.ConfigEntry<bool> configCollectResourcesFlag;
+        public static BepInEx.Configuration.ConfigEntry<uint> configMaxClearingDroneCount;
+        public static BepInEx.Configuration.ConfigEntry<float> configLimitClearingDistance;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingWhileDrifting;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingWhileFlying;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableRecallWhileFlying;
+        public static BepInEx.Configuration.ConfigEntry<uint> configReservedInventorySpace;
+        public static BepInEx.Configuration.ConfigEntry<float> configReservedPower;
+        public static BepInEx.Configuration.ConfigEntry<float> configSpeedScaleFactor;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableInstantClearing;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableDebug;
+
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemTree;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemStone;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemDetail;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemIce;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemSpaceCapsule;
+
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetAridDesert;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetAshenGelisol;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetBarrenDesert;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetGobi;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetIceFieldGelisol;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetLava;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetMediterranean;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetOceanWorld;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetOceanicJungle;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetPrairie;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetRedStone;
+        public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetVolcanicAsh;
 
         // The following class was copied from PlayerAction_Mine
         public class DroneAction_Mine
@@ -84,7 +95,7 @@ namespace DysonSphereDroneClearing
                 double energyAvailable;
                 float fractionOfEnergyAvailable;
                 this.player.mecha.QueryEnergy(miningEnergyCost, out energyAvailable, out fractionOfEnergyAvailable);
-                int miningTime = (int)(this.player.mecha.miningSpeed * configSpeedScaleFactor * fractionOfEnergyAvailable * 10000f + 0.49f);
+                int miningTime = (int)(this.player.mecha.miningSpeed * configSpeedScaleFactor.Value * fractionOfEnergyAvailable * 10000f + 0.49f);
 
                 VegeData vegeData = factory.GetVegeData(this.miningId);
                 this.miningProtoId = (int)vegeData.protoId;
@@ -181,7 +192,7 @@ namespace DysonSphereDroneClearing
                     }
                 }
 
-                if (configEnableDebug)
+                if (configEnableDebug.Value)
                 {
                     Logger.LogInfo(totalDroneTaskCount.ToString() + " tasked drone count made up of " + GameMain.mainPlayer.mecha.droneLogic.serving.Count.ToString() + " assigned and " + (totalDroneTaskCount - GameMain.mainPlayer.mecha.droneLogic.serving.Count).ToString() + " unassigned drones.");
                 }
@@ -193,8 +204,7 @@ namespace DysonSphereDroneClearing
         {
             Logger = base.Logger;  // "C:\Program Files (x86)\Steam\steamapps\common\Dyson Sphere Program\BepInEx\LogOutput.log"
             Config = base.Config;
-            OnConfigReload();
-            Config.ConfigReloaded += OnConfigReload;
+            InitialConfigSetup();
 
             // PlayerOrder.ReachTest, PlayerAction_Mine.GameTick
             // MechaDroneLogic.UpdateDrones -> MechaDroneLogic.Build -> PlanetFactory.BuildFinally
@@ -289,6 +299,103 @@ namespace DysonSphereDroneClearing
             return Sprite.Create(tex, new Rect(0f, 0f, 48f, 48f), new Vector2(0f, 0f), 1000);
         }
 
+        public void InitialConfigSetup()
+        {
+            bool configFileContainsOldFlagsFlag = false;
+            FieldInfo[] fields = typeof(BepInEx.Configuration.ConfigFile).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+            foreach (FieldInfo field in fields)
+            {
+                if (field.Name == "<OrphanedEntries>k__BackingField")
+                {
+                    Dictionary<BepInEx.Configuration.ConfigDefinition, string> orphanedEntries =
+                        (Dictionary<BepInEx.Configuration.ConfigDefinition, string>)field.GetValue(Config);
+                    foreach (BepInEx.Configuration.ConfigDefinition key in orphanedEntries.Keys)
+                    {
+                        if (key.Section == "Planets" && key.Key == "IncludeGeneric")
+                        {
+                            configFileContainsOldFlagsFlag = true;
+                            break;
+                        }
+                    }
+                    if (configFileContainsOldFlagsFlag)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            configEnableMod = Config.Bind<bool>("Config", "Enable", true, "Enable/disable drone clearing mod.");
+            configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", true, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.");
+            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", Mecha.kMaxDroneCount, "Limit the number of drones that will be used when clearing.");
+            configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", 0.4f, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0");
+            configEnableClearingWhileDrifting = Config.Bind<bool>("Config", "ClearWhileDrifting", true, "This flag can be used to enable/disable clearing while drifing over oceans.");
+            configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", false, "This flag can be used to enable/disable clearing while flying.");
+            configEnableRecallWhileFlying = Config.Bind<bool>("Config", "RecallWhileFlying", true, "Enable this feature if you want drones assigned to clearing to be recalled when Icarus is flying. (This setting is only used if configEnableClearingWhileFlying is false.)");
+            configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", 10, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)");
+            configReservedPower = Config.Bind<float>("Config", "PowerReserve", 0.4f, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.");
+            configSpeedScaleFactor = Config.Bind<float>("Config", "SpeedScale", 1.0f, "Is this mod so great that it feels too much like cheating?  Slow the drones down with this setting.  They normally operate at the same speed as Icarus.  Too slow?  You can cheat too by setting a value greater than 1.");
+            configEnableInstantClearing = Config.Bind<bool>("Config", "DSPCheats_InstantClearing", false, "If the DSP Cheats mod is installed, and Instant-Build is enabled, should this mod work with that one and instantly clear?");
+            configEnableDebug = Config.Bind<bool>("Config", "EnableDebug", false, "Enabling debug will add more feedback to the BepInEx console.  This includes the reasons why drones are not clearing.");
+
+            configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", true, "Enabling clearing of trees.");
+            configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", true, "Enabling clearing of stones which can block the mecha's movement.");
+            configEnableClearingItemDetail = Config.Bind<bool>("Items", "IncludePebbles", false, "Enabling clearing of tiny stones which won't block the mecha's movement.");
+            configEnableClearingItemIce = Config.Bind<bool>("Items", "IncludeIce", true, "Enabling clearing of ice.");
+            configEnableClearingItemSpaceCapsule = Config.Bind<bool>("Items", "IncludeSpaceCapsule", false, "Enabling clearing of space capsule.  (This setting is false by default just in case you set CollectResources to false, and then start a new game.)");
+
+            configEnableClearingPlanetAridDesert = Config.Bind<bool>("Planets", "IncludeAridDesert", true, "Enable clearing on arid desert planets.");
+            configEnableClearingPlanetAshenGelisol = Config.Bind<bool>("Planets", "IncludeAshenGelisol", true, "Enable clearing on ashen gelisol planets.");
+            configEnableClearingPlanetBarrenDesert = Config.Bind<bool>("Planets", "IncludeBarrenDesert", true, "Enable clearing on barren desert planets.");
+            configEnableClearingPlanetGobi = Config.Bind<bool>("Planets", "IncludeGobi", true, "Enable clearing on gobi planets.");
+            configEnableClearingPlanetIceFieldGelisol = Config.Bind<bool>("Planets", "IncludeIceFieldGelisol", true, "Enable clearing on ice field gelisol planets.");
+            configEnableClearingPlanetLava = Config.Bind<bool>("Planets", "IncludeLava", true, "Enable clearing on lava planets.");
+            configEnableClearingPlanetMediterranean = Config.Bind<bool>("Planets", "IncludeMediterranean", true, "Enable clearing on mediterranean planets.");
+            configEnableClearingPlanetOceanWorld = Config.Bind<bool>("Planets", "IncludeOceanWorld", true, "Enable clearing on ocean world planets.");
+            configEnableClearingPlanetOceanicJungle = Config.Bind<bool>("Planets", "IncludeOceanicJungle", true, "Enable clearing on oceanic jungle planets.");
+            configEnableClearingPlanetPrairie = Config.Bind<bool>("Planets", "IncludePrairie", true, "Enable clearing on prairie planets.");
+            configEnableClearingPlanetRedStone = Config.Bind<bool>("Planets", "IncludeRedStone", true, "Enable clearing on red stone planets.");
+            configEnableClearingPlanetVolcanicAsh = Config.Bind<bool>("Planets", "IncludeVolcanicAsh", true, "Enable clearing on volcanic ash planets.");
+
+            // The following block of code handles converting from the v1.2.10 to v1.3.0 config settings.
+            if (configFileContainsOldFlagsFlag)
+            {
+                Logger.LogDebug("Old (pre-v1.3.0) config settings exist.  Converting over now.");
+
+                BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetGeneric = Config.Bind<bool>("Planets", "IncludeGeneric", true, "<Obsolete>");
+                BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetVolcanic = Config.Bind<bool>("Planets", "IncludeVolcanic", true, "<Obsolete>");
+                BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetOcean = Config.Bind<bool>("Planets", "IncludeOcean", true, "<Obsolete>");
+                BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetDesert = Config.Bind<bool>("Planets", "IncludeDesert", true, "<Obsolete>");
+                BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetIce = Config.Bind<bool>("Planets", "IncludeIce", true, "<Obsolete>");
+
+                configEnableClearingPlanetLava.Value = configEnableClearingPlanetVolcanic.Value;
+                configEnableClearingPlanetVolcanicAsh.Value = configEnableClearingPlanetVolcanic.Value;
+
+                configEnableClearingPlanetMediterranean.Value = configEnableClearingPlanetOcean.Value;
+                configEnableClearingPlanetOceanWorld.Value = configEnableClearingPlanetOcean.Value;
+                configEnableClearingPlanetOceanicJungle.Value = configEnableClearingPlanetOcean.Value;
+                configEnableClearingPlanetPrairie.Value = configEnableClearingPlanetOcean.Value;
+                configEnableClearingPlanetRedStone.Value = configEnableClearingPlanetOcean.Value;
+
+                configEnableClearingPlanetAridDesert.Value = configEnableClearingPlanetDesert.Value;
+                configEnableClearingPlanetAshenGelisol.Value = configEnableClearingPlanetDesert.Value;
+                configEnableClearingPlanetBarrenDesert.Value = configEnableClearingPlanetDesert.Value;
+                configEnableClearingPlanetGobi.Value = configEnableClearingPlanetDesert.Value;
+
+                configEnableClearingPlanetIceFieldGelisol.Value = configEnableClearingPlanetIce.Value;
+
+                Config.Remove(configEnableClearingPlanetGeneric.Definition);
+                Config.Remove(configEnableClearingPlanetVolcanic.Definition);
+                Config.Remove(configEnableClearingPlanetOcean.Definition);
+                Config.Remove(configEnableClearingPlanetDesert.Definition);
+                Config.Remove(configEnableClearingPlanetIce.Definition);
+
+                Config.Save();
+            }
+
+            OnConfigReload();
+            Config.ConfigReloaded += OnConfigReload;
+        }
+
         public static void OnConfigReload(object sender, EventArgs e)
         {
             OnConfigReload();
@@ -296,32 +403,9 @@ namespace DysonSphereDroneClearing
 
         public static void OnConfigReload()
         {
-            configEnableMod = Config.Bind<bool>("Config", "Enable", true, "Enable/disable drone clearing mod.");
-            configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", configCollectResourcesFlag, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.").Value;
-            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", configMaxClearingDroneCount, "Limit the number of drones that will be used when clearing.").Value;
-            configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", configLimitClearingDistance, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0").Value;
-            configLimitClearingDistance = Math.Min(configLimitClearingDistance, 1.0f);
-            configLimitClearingDistance = Math.Max(configLimitClearingDistance, 0.0f);
-            configEnableClearingWhileDrifting = Config.Bind<bool>("Config", "ClearWhileDrifting", configEnableClearingWhileDrifting, "This flag can be used to enable/disable clearing while drifing over oceans.").Value;
-            configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", configEnableClearingWhileFlying, "This flag can be used to enable/disable clearing while flying.").Value;
-            configEnableRecallWhileFlying = Config.Bind<bool>("Config", "RecallWhileFlying", configEnableRecallWhileFlying, "Enable this feature if you want drones assigned to clearing to be recalled when Icarus is flying. (This setting is only used if configEnableClearingWhileFlying is false.)").Value;
-            configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", configReservedInventorySpace, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)").Value;
-            configReservedPower = Config.Bind<float>("Config", "PowerReserve", configReservedPower, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.").Value;
-            configSpeedScaleFactor = Config.Bind<float>("Config", "SpeedScale", configSpeedScaleFactor, "Is this mod so great that it feels too much like cheating?  Slow the drones down with this setting.  They normally operate at the same speed as Icarus.  Too slow?  You can cheat too by setting a value greater than 1.").Value;
-            configSpeedScaleFactor = Math.Max(configSpeedScaleFactor, 0.0f);
-            configEnableInstantClearing = Config.Bind<bool>("Config", "DSPCheats_InstantClearing", configEnableInstantClearing, "If the DSP Cheats mod is installed, and Instant-Build is enabled, should this mod work with that one and instantly clear?").Value;
-            configEnableDebug = Config.Bind<bool>("Config", "EnableDebug", configEnableDebug, "Enabling debug will add more feedback to the BepInEx console.  This includes the reasons why drones are not clearing.").Value;
-
-            configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", configEnableClearingItemTree, "Enabling clearing of trees.").Value;
-            configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", configEnableClearingItemStone, "Enabling clearing of stones which can block the mecha's movement.  (This includes the space capsule at the start of a new game.)").Value;
-            configEnableClearingItemDetail = Config.Bind<bool>("Items", "IncludePebbles", configEnableClearingItemDetail, "Enabling clearing of tiny stones which won't block the mecha's movement.").Value;
-            configEnableClearingItemIce = Config.Bind<bool>("Items", "IncludeIce", configEnableClearingItemIce, "Enabling clearing of ice.").Value;
-
-            configEnableClearingPlanetGeneric = Config.Bind<bool>("Planets", "IncludeGeneric", configEnableClearingPlanetGeneric, "Enable clearing on generic planets.").Value;
-            configEnableClearingPlanetVocano = Config.Bind<bool>("Planets", "IncludeVolcanic", configEnableClearingPlanetVocano, "Enable clearing on volcanic planets.").Value;
-            configEnableClearingPlanetOcean = Config.Bind<bool>("Planets", "IncludeOcean", configEnableClearingPlanetOcean, "Enable clearing on ocean planets.").Value;
-            configEnableClearingPlanetDesert = Config.Bind<bool>("Planets", "IncludeDesert", configEnableClearingPlanetDesert, "Enable clearing on desert planets.").Value;
-            configEnableClearingPlanetIce = Config.Bind<bool>("Planets", "IncludeIce", configEnableClearingPlanetIce, "Enable clearing on ice planets.").Value;
+            configLimitClearingDistance.Value = Math.Min(configLimitClearingDistance.Value, 1.0f);
+            configLimitClearingDistance.Value = Math.Max(configLimitClearingDistance.Value, 0.0f);
+            configSpeedScaleFactor.Value = Math.Max(configSpeedScaleFactor.Value, 0.0f);
 
             Logger.LogInfo("Configuration loaded.");
         }
@@ -335,7 +419,7 @@ namespace DysonSphereDroneClearing
                 PrebuildData prebuild = player.factory.prebuildPool[prebuildId];
                 if (isDroneClearingPrebuild(prebuild))
                 {   // This will never happen unless DSP Cheats' Instant-Build feature is enabled.  So, let's do what it's telling us to.
-                    if (configEnableInstantClearing)
+                    if (configEnableInstantClearing.Value)
                     {
                         player.factory.RemovePrebuildData(prebuildId);
                         player.factory.RemoveVegeWithComponents(prebuild.upEntity);
@@ -365,7 +449,7 @@ namespace DysonSphereDroneClearing
             {
                 if (GameMain.data.hidePlayerModel)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping because player model is hidden.  This is needed for compatability with the Render Distance mod.");
                     }
@@ -375,7 +459,7 @@ namespace DysonSphereDroneClearing
 
                 if (!configEnableMod.Value)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping because mod is disabled.");
                     }
@@ -384,7 +468,7 @@ namespace DysonSphereDroneClearing
 
                 if (___player.movementState == EMovementState.Sail)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping because movement state is Sail.");
                     }
@@ -393,9 +477,9 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (___player.movementState == EMovementState.Drift && !configEnableClearingWhileDrifting)
+                if (___player.movementState == EMovementState.Drift && !configEnableClearingWhileDrifting.Value)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping while drifting.");
                     }
@@ -403,17 +487,17 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (___player.movementState == EMovementState.Fly && !configEnableClearingWhileFlying)
+                if (___player.movementState == EMovementState.Fly && !configEnableClearingWhileFlying.Value)
                 {
-                    if (configEnableRecallWhileFlying)
+                    if (configEnableRecallWhileFlying.Value)
                     {
-                        if (configEnableDebug)
+                        if (configEnableDebug.Value)
                         {
                             Logger.LogInfo("Recalling drones.");
                         }
                         RecallClearingDrones();
                     }
-                    else if (configEnableDebug)
+                    else if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping while flying.");
                     }
@@ -423,7 +507,7 @@ namespace DysonSphereDroneClearing
 
                 if (___player.mecha.coreEnergy < ___player.mecha.droneEjectEnergy)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping because of insufficient mecha energy to eject a drone.");
                     }
@@ -431,24 +515,36 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if ((___player.planetData.type == EPlanetType.None && !configEnableClearingPlanetGeneric) ||
-                    (___player.planetData.type == EPlanetType.Vocano && !configEnableClearingPlanetVocano) ||
-                    (___player.planetData.type == EPlanetType.Ocean && !configEnableClearingPlanetOcean) ||
-                    (___player.planetData.type == EPlanetType.Desert && !configEnableClearingPlanetDesert) ||
-                    (___player.planetData.type == EPlanetType.Ice && !configEnableClearingPlanetIce))
+                // Filter based on planet.typeString
+                // Themes are stored in Resources\prototypes\ThemeProtoSet.asset
+                // Using DisplayName because it should be the same string regardless of translation.
+                // Translations are stored in Resources\prototypes\StringProtoSet.asset
+                string planetThemeName = LDB.themes.Select(___player.planetData.theme).DisplayName;
+                if ((!configEnableClearingPlanetAridDesert.Value && planetThemeName == "干旱荒漠") ||  // Arid desert; PlanetType: 3 (Desert)
+                    (!configEnableClearingPlanetAshenGelisol.Value && planetThemeName == "灰烬冻土") ||  // Ashen gelisol; PlanetType: 3 (Desert)
+                    (!configEnableClearingPlanetBarrenDesert.Value && planetThemeName == "贫瘠荒漠") ||  // Barren desert; PlanetType: 3 (Desert)
+                    (!configEnableClearingPlanetGobi.Value && planetThemeName == "戈壁") ||  // Gobi; PlanetType: 3 (Desert)
+                    (!configEnableClearingPlanetIceFieldGelisol.Value && planetThemeName == "冰原冻土") ||  // Ice field gelisol; PlanetType: 4 (Ice)
+                    (!configEnableClearingPlanetLava.Value && planetThemeName == "熔岩") ||  // Lava; PlanetType: 1 (Vocano)
+                    (!configEnableClearingPlanetMediterranean.Value && planetThemeName == "地中海") ||  // Mediterranean; PlanetType: 2 (Ocean)
+                    (!configEnableClearingPlanetOceanWorld.Value && planetThemeName == "水世界") ||  // Ocean world; PlanetType: 2 (Ocean)
+                    (!configEnableClearingPlanetOceanicJungle.Value && planetThemeName == "海洋丛林") ||  // Oceanic jungle; PlanetType: 2 (Ocean)
+                    (!configEnableClearingPlanetPrairie.Value && planetThemeName == "草原") ||  // Prairie; PlanetType: 2 (Ocean)
+                    (!configEnableClearingPlanetRedStone.Value && planetThemeName == "红石") ||  // Red stone; PlanetType: 2 (Ocean)
+                    (!configEnableClearingPlanetVolcanicAsh.Value && planetThemeName == "火山灰"))  // Volcanic ash; PlanetType: 1 (Vocano)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping planet type " + ___player.planetData.type.ToString());
+                        Logger.LogInfo("Skipping planet type " + ___player.planetData.typeString);
                     }
                     UpdateTipText("(Waiting on this planet type.)");
                     return;
                 }
 
                 int totalDroneTaskingCount = getTotalDroneTaskingCount();
-                if (totalDroneTaskingCount >= Math.Min(configMaxClearingDroneCount, ___player.mecha.droneCount))
+                if (totalDroneTaskingCount >= Math.Min(configMaxClearingDroneCount.Value, ___player.mecha.droneCount))
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         var sbc = new StringBuilder();
                         sbc.AppendFormat("Skipping due to number of drone assignments: totalDroneTaskingCount={0}, configMaxClearingDroneCount={1}, player.mecha.droneCount={2}, player.mecha.idleDroneCount={3}",
@@ -459,9 +555,9 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap < configReservedPower)
+                if (___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap < configReservedPower.Value)
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("Skipping due to low power.");
                     }
@@ -469,7 +565,7 @@ namespace DysonSphereDroneClearing
                     return;
                 }
 
-                if (configCollectResourcesFlag)  // ... check configReservedInventorySpace
+                if (configCollectResourcesFlag.Value)  // ... check configReservedInventorySpace
                 {
                     uint numEmptyInventorySlots = 0;
                     for (int gridIdx = 0; gridIdx < ___player.package.size; ++gridIdx)
@@ -479,9 +575,9 @@ namespace DysonSphereDroneClearing
                             numEmptyInventorySlots++;
                         }
                     }
-                    if (numEmptyInventorySlots < configReservedInventorySpace)
+                    if (numEmptyInventorySlots < configReservedInventorySpace.Value)
                     {
-                        if (configEnableDebug)
+                        if (configEnableDebug.Value)
                         {
                             Logger.LogInfo("Too few inventory slots");
                         }
@@ -490,18 +586,26 @@ namespace DysonSphereDroneClearing
                     }
                 }
 
-                float closestVegeDistance = ___player.mecha.buildArea * configLimitClearingDistance * 2;
+                float closestVegeDistance = ___player.mecha.buildArea * configLimitClearingDistance.Value * 2;
                 int closestVegeId = -1;
                 foreach (VegeData vegeData in ___player.factory.vegePool)
                 {
                     VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
                     // vegeProto.Type == EVegeType.Detail covers grass and small minable rocks.  So the check includes vegeProto.MiningItem.Length instead.
+                    // VegeProto stored in Resources\prototypes\VegeProtoSet.asset
                     if (vegeProto != null && vegeProto.MiningItem.Length > 0)
                     {
-                        if ((vegeProto.Type == EVegeType.Tree && !configEnableClearingItemTree) ||
-                            (vegeProto.Type == EVegeType.Stone && !configEnableClearingItemStone) ||
-                            (vegeProto.Type == EVegeType.Detail && !configEnableClearingItemDetail) ||
-                            (vegeProto.Type == EVegeType.Ice && !configEnableClearingItemIce))
+                        if (vegeProto.Name == "飞行舱") // Space Capsule
+                        {
+                            if (!configEnableClearingItemSpaceCapsule.Value)
+                            {
+                                continue;
+                            }
+                        }
+                        else if ((vegeProto.Type == EVegeType.Tree && !configEnableClearingItemTree.Value) ||
+                            (vegeProto.Type == EVegeType.Stone && !configEnableClearingItemStone.Value) ||
+                            (vegeProto.Type == EVegeType.Detail && !configEnableClearingItemDetail.Value) ||
+                            (vegeProto.Type == EVegeType.Ice && !configEnableClearingItemIce.Value))
                         {
                             continue;
                         }
@@ -528,7 +632,7 @@ namespace DysonSphereDroneClearing
                     }
                 }
 
-                if (closestVegeDistance <= ___player.mecha.buildArea * configLimitClearingDistance)
+                if (closestVegeDistance <= ___player.mecha.buildArea * configLimitClearingDistance.Value)
                 {
                     VegeData vegeData = ___player.factory.vegePool[closestVegeId];
                     VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
@@ -552,7 +656,7 @@ namespace DysonSphereDroneClearing
                 }
                 else
                 {
-                    if (configEnableDebug)
+                    if (configEnableDebug.Value)
                     {
                         Logger.LogInfo("No enabled items within configured distance.");
                     }
@@ -593,7 +697,7 @@ namespace DysonSphereDroneClearing
                         }
                     }
 
-                    if (configCollectResourcesFlag)
+                    if (configCollectResourcesFlag.Value)
                     {
                         VegeData vegeData = factory.vegePool[prebuild.upEntity];
                         if (vegeData.id == 0)
@@ -673,7 +777,7 @@ namespace DysonSphereDroneClearing
                 RecallClearingDrones();
             }
 
-            if (configEnableDebug)
+            if (configEnableDebug.Value)
             {
                 if (timei > lastDisplayTime + 30 || timei < lastDisplayTime)
                 {
