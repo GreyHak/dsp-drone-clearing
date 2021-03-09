@@ -353,7 +353,7 @@ namespace DysonSphereDroneClearing
             configEnableClearingPlanetOceanWorld = Config.Bind<bool>("Planets", "IncludeOceanWorld", true, "Enable clearing on ocean world planets.");
             configEnableClearingPlanetOceanicJungle = Config.Bind<bool>("Planets", "IncludeOceanicJungle", true, "Enable clearing on oceanic jungle planets.");
             configEnableClearingPlanetPrairie = Config.Bind<bool>("Planets", "IncludePrairie", true, "Enable clearing on prairie planets.");
-            configEnableClearingPlanetRedStone = Config.Bind<bool>("Planets", "IncludeRedStone", true, "Enable clearing on red stone planets.");
+            configEnableClearingPlanetRedStone = Config.Bind<bool>("Planets", "IncludeRedStone", true, "Enable clearing on red stone (mushroom) planets.");
             configEnableClearingPlanetVolcanicAsh = Config.Bind<bool>("Planets", "IncludeVolcanicAsh", true, "Enable clearing on volcanic ash planets.");
 
             // The following block of code handles converting from the v1.2.10 to v1.3.0 config settings.
