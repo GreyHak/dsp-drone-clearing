@@ -28,7 +28,9 @@ Settings include
  - Control over planet types clearing is performed on.
  - Control the drone clearing speed.  Default is to clear at Icarus' mining speed.
 
-The configuration file is called `greyhak.dysonsphereprogram.droneclearing.cfg`.  It is generated the first time you run the game with this mod installed.  On Windows 10 it is located at `%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg`.
+The configuration file is called `greyhak.dysonsphereprogram.droneclearing.cfg`.  It is generated the first time you run the game with this mod installed.  On Windows 10 it is located at
+ - If you installed manually:  `%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg`
+ - If you installed with r2modman:  `C:\Users\<username>\AppData\Roaming\r2modmanPlus-local\DysonSphereProgram\profiles\Default\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg`
 
 ## Installation
 This mod uses the BepInEx mod plugin framework.  So BepInEx must be installed to use this mod.  Find details for installing BepInEx [in their user guide](https://bepinex.github.io/bepinex_docs/master/articles/user_guide/installation/index.html#installing-bepinex-1).  This mod was tested with BepInEx x64 5.4.5.0 and Dyson Sphere Program 0.6.16.5831 on Windows 10.
