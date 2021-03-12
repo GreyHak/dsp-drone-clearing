@@ -43,6 +43,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.12
+ - Rebuild required for the recent Dyson Sphere Program [0.6.17.5932 update](https://store.steampowered.com/news/app/1366540/view/4178750236020840924).
 ### v1.2.11
  - Ability to enable/disable clearing of the space capsule separately from stones.  This is important when using the CollectResources=false setting so key early-game resources aren't lost.
  - Greater configurability as to which planet types to enable clearing on.

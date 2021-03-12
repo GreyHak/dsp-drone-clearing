@@ -34,7 +34,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.11";
+        public const string pluginVersion = "1.2.12";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -134,7 +134,7 @@ namespace DysonSphereDroneClearing
                             }
                         }
                         VFEffectEmitter.Emit(vegeProto.MiningEffect, vegeData.pos, vegeData.rot);
-                        VFAudio.Create(vegeProto.MiningAudio, null, vegeData.pos, true);
+                        VFAudio.Create(vegeProto.MiningAudio, null, vegeData.pos, true, 0);
                         factory.RemoveVegeWithComponents(vegeData.id);
                         GameMain.gameScenario.NotifyOnVegetableMined((int)vegeData.protoId);
                         this.miningType = EObjectType.Entity;  // This change will cause the mission to be completed.
