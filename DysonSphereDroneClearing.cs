@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using BepInEx;
 using HarmonyLib;
 using UnityEngine;
@@ -34,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.12";
+        public const string pluginVersion = "1.2.13";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -57,6 +56,8 @@ namespace DysonSphereDroneClearing
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemDetail;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemIce;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemSpaceCapsule;
+        public static BepInEx.Configuration.ConfigEntry<string> configDisableClearingItemIds_StringConfigEntry;
+        public static short[] configDisableClearingItemIds_ShortArray;
 
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetAridDesert;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetAshenGelisol;
@@ -342,6 +343,7 @@ namespace DysonSphereDroneClearing
             configEnableClearingItemDetail = Config.Bind<bool>("Items", "IncludePebbles", false, "Enabling clearing of tiny stones which won't block the mecha's movement.");
             configEnableClearingItemIce = Config.Bind<bool>("Items", "IncludeIce", true, "Enabling clearing of ice.");
             configEnableClearingItemSpaceCapsule = Config.Bind<bool>("Items", "IncludeSpaceCapsule", false, "Enabling clearing of space capsule.  (This setting is false by default just in case you set CollectResources to false, and then start a new game.)");
+            configDisableClearingItemIds_StringConfigEntry = Config.Bind<string>("Items", "DisableItemIds", "", "Disable clearing of specific vege proto IDs.  String is a comma-separated list of shorts.  This mod will print to the debug console all vege proto IDs which are mined so you can see what IDs you're mining.  See README for this mod for more information.");
 
             configEnableClearingPlanetAridDesert = Config.Bind<bool>("Planets", "IncludeAridDesert", true, "Enable clearing on arid desert planets.");
             configEnableClearingPlanetAshenGelisol = Config.Bind<bool>("Planets", "IncludeAshenGelisol", true, "Enable clearing on ashen gelisol planets.");
@@ -406,6 +408,20 @@ namespace DysonSphereDroneClearing
             configLimitClearingDistance.Value = Math.Min(configLimitClearingDistance.Value, 1.0f);
             configLimitClearingDistance.Value = Math.Max(configLimitClearingDistance.Value, 0.0f);
             configSpeedScaleFactor.Value = Math.Max(configSpeedScaleFactor.Value, 0.0f);
+            configDisableClearingItemIds_ShortArray = configDisableClearingItemIds_StringConfigEntry.Value.Split(',').Select(s => short.TryParse(s, out short n) ? n : (short)0).ToArray();
+
+            foreach (short protoId in configDisableClearingItemIds_ShortArray)
+            {
+                VegeProto vegeProto = LDB.veges.Select((int)protoId);
+                if (vegeProto == null)
+                {
+                    Logger.LogError($"ERROR: Configured vege proto ID {protoId} is invalid.  Recommend removing this ID from the config file.");
+                }
+                else
+                {
+                    Logger.LogInfo($"Configured to block vege proto ID {protoId} for {vegeProto.Name.Translate()}");
+                }
+            }
 
             Logger.LogInfo("Configuration loaded.");
         }
@@ -606,6 +622,20 @@ namespace DysonSphereDroneClearing
                             (vegeProto.Type == EVegeType.Stone && !configEnableClearingItemStone.Value) ||
                             (vegeProto.Type == EVegeType.Detail && !configEnableClearingItemDetail.Value) ||
                             (vegeProto.Type == EVegeType.Ice && !configEnableClearingItemIce.Value))
+                        {
+                            continue;
+                        }
+
+                        bool disabledById = false;
+                        foreach (short disabledId in configDisableClearingItemIds_ShortArray)
+                        {
+                            if (vegeData.protoId == disabledId)
+                            {
+                                disabledById = true;
+                                break;
+                            }
+                        }
+                        if (disabledById)
                         {
                             continue;
                         }
@@ -820,6 +850,13 @@ namespace DysonSphereDroneClearing
             foreach (DroneClearingMissionData mission in activeMissions)
                 mission.miningTargetGizmo.Close();
             activeMissions.Clear();
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(GameScenarioLogic), "NotifyOnVegetableMined")]
+        public static void GameScenarioLogic_NotifyOnVegetableMined_Prefix(int protoId)
+        {
+            VegeProto vegeProto = LDB.veges.Select(protoId);
+            Logger.LogDebug($"Mined proto ID {protoId} (" + vegeProto.Name.Translate() + ")");
         }
     }
 }

@@ -28,6 +28,16 @@ Settings include
  - Control over planet types clearing is performed on.
  - Control the drone clearing speed.  Default is to clear at Icarus' mining speed.
 
+Want fine-grained control over which items are not cleared?  If you tell the mod exactly what IDs not to clear using the DisableItemIds config setting, it will apply those rules.  DisableItemIds is a string containing a comma-separated list of vege proto ID shorts.  To determine what the ID of the item is you want to prevent clearing for, follow this process.
+ - Update your `BepInEx.cfg` file, under `[Logging.Console]`, to set `Enabled = true`
+ - In your `BepInEx.cfg` file, under `[Logging.Console]`, also set `LogLevels = All`
+ - Load a save where you can access the item or items you wish to have the mod not clear.
+ - If drone clearing is enabled, temporarily disable drone clearing using the toggle button on the HUD.
+ - Use Icarus to remove the items you want this mod not to clear.
+ - Each time Icarus removes an item this mod will print to the debug console the vege proto IDs which are removed.
+ - Add that list of IDs as a comma-separated list, to the DisableItemIds setting in `greyhak.dysonsphereprogram.droneclearing.cfg`.
+ - Once done, you can revert the settings in your `BepInEx.cfg` file if you want.
+
 The configuration file is called `greyhak.dysonsphereprogram.droneclearing.cfg`.  It is generated the first time you run the game with this mod installed.  On Windows 10 it is located at
  - If you installed manually:  `%PROGRAMFILES(X86)%\Steam\steamapps\common\Dyson Sphere Program\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg`
  - If you installed with r2modman:  `C:\Users\<username>\AppData\Roaming\r2modmanPlus-local\DysonSphereProgram\profiles\Default\BepInEx\config\greyhak.dysonsphereprogram.droneclearing.cfg`
@@ -43,6 +53,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.13
+ - Improved configrability to stop clearing for certain items.
 ### v1.2.12
  - Rebuild required for the recent Dyson Sphere Program [0.6.17.5932 update](https://store.steampowered.com/news/app/1366540/view/4178750236020840924).
 ### v1.2.11
