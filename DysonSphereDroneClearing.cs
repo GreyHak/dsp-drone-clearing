@@ -408,7 +408,12 @@ namespace DysonSphereDroneClearing
             configLimitClearingDistance.Value = Math.Min(configLimitClearingDistance.Value, 1.0f);
             configLimitClearingDistance.Value = Math.Max(configLimitClearingDistance.Value, 0.0f);
             configSpeedScaleFactor.Value = Math.Max(configSpeedScaleFactor.Value, 0.0f);
+
             configDisableClearingItemIds_ShortArray = configDisableClearingItemIds_StringConfigEntry.Value.Split(',').Select(s => short.TryParse(s, out short n) ? n : (short)0).ToArray();
+            if (configDisableClearingItemIds_ShortArray.Length == 1 && configDisableClearingItemIds_ShortArray[0] == 0)
+            {
+                configDisableClearingItemIds_ShortArray = new short[] { };
+            }
 
             foreach (short protoId in configDisableClearingItemIds_ShortArray)
             {
