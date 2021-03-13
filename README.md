@@ -54,7 +54,7 @@ The source code for this mod is available for download, review and forking on Gi
 
 ## Change Log
 ### v1.2.13
- - Improved configrability to stop clearing for certain items.
+ - Improved configurability to stop clearing for certain user-specified items.
 ### v1.2.12
  - Rebuild required for the recent Dyson Sphere Program [0.6.17.5932 update](https://store.steampowered.com/news/app/1366540/view/4178750236020840924).
 ### v1.2.11
