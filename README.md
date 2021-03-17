@@ -11,9 +11,10 @@ If you like this mod, please click the thumbs up at the [top of the page](https:
 
 If you have issues with this mod, please report them on [GitHub](https://github.com/GreyHak/dsp-drone-clearing/issues).  I try to respond within 12 hours.    You can also contact me at GreyHak#2995 on the [DSP Modding](https://discord.gg/XxhyTNte) Discord #tech-support channel..
 
-## Config File
-
+## Config Settings
 Configuration settings or loaded when you game is loaded.  So if you want to change the settings file, quit the game, but don't exit to desktop, then continue your game.
+
+This mod is also compatible with [BepInEx.ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager) which provides an in-game GUI for changing the settings in real-time.
 
 Settings include
  - Mod enable flag.
@@ -27,6 +28,8 @@ Settings include
  - Control over clearing of rocks, trees, small rocks and ice.
  - Control over planet types clearing is performed on.
  - Control the drone clearing speed.  Default is to clear at Icarus' mining speed.
+
+![Config Settings Window image](https://raw.githubusercontent.com/GreyHak/dsp-drone-clearing/master/ConfigSettingsWindow.jpg)
 
 Want fine-grained control over which items are not cleared?  If you tell the mod exactly what IDs not to clear using the DisableItemIds config setting, it will apply those rules.  DisableItemIds is a string containing a comma-separated list of vege proto ID shorts.  To determine what the ID of the item is you want to prevent clearing for, follow this process.
  - Update your `BepInEx.cfg` file, under `[Logging.Console]`, to set `Enabled = true`
@@ -53,6 +56,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.2.14
+ - Improved in-game configuration changes by improving compatibility with [BepInEx.ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager).
 ### v1.2.13
  - Improved configurability to stop clearing for certain user-specified items.
 ### v1.2.12

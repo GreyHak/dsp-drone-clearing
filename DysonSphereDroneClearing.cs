@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.2.13";
+        public const string pluginVersion = "1.2.14";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -230,7 +230,7 @@ namespace DysonSphereDroneClearing
         public static void GameMain_Begin_Prefix()
         {
             Config.Reload();
-            if (GameMain.instance != null && GameObject.Find("Game Menu/button-1-bg") && !GameObject.Find("greyhak-clearing-enable-button"))
+            if (GameMain.instance != null && GameObject.Find("Game Menu/button-1-bg") && enableDisableButton == null)
             {
                 RectTransform parent = GameObject.Find("Game Menu").GetComponent<RectTransform>();
                 RectTransform prefab = GameObject.Find("Game Menu/button-1-bg").GetComponent<RectTransform>();
@@ -250,15 +250,7 @@ namespace DysonSphereDroneClearing
                 enableDisableButton.GetComponent<UIButton>().button.onClick.AddListener(() =>
                 {
                     configEnableMod.Value = !configEnableMod.Value;
-                    if (!configEnableMod.Value)
-                    {
-                        clearDroneTaskingOnNextTick = true;
-                    }
-
-                    enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod.Value ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
-                    enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
-                        configEnableMod.Value ? enabledSprite : disabledSprite;
-                    UpdateTipText("");
+                    OnConfigEnableChanged();
                 });
             }
         }
@@ -327,13 +319,13 @@ namespace DysonSphereDroneClearing
 
             configEnableMod = Config.Bind<bool>("Config", "Enable", true, "Enable/disable drone clearing mod.");
             configCollectResourcesFlag = Config.Bind<bool>("Config", "CollectResources", true, "Take time to collect resources. If false, clearing will be quicker, but no resources will be collected.");
-            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", Mecha.kMaxDroneCount, "Limit the number of drones that will be used when clearing.");
-            configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", 0.4f, "Fraction of mecha build distance to perform clearing.  Min 0.0, Max 1.0");
+            configMaxClearingDroneCount = Config.Bind<uint>("Config", "DroneCountLimit", Mecha.kMaxDroneCount, new BepInEx.Configuration.ConfigDescription("Limit the number of drones that will be used when clearing.", new BepInEx.Configuration.AcceptableValueRange<uint>(0, Mecha.kMaxDroneCount)));
+            configLimitClearingDistance = Config.Bind<float>("Config", "ClearingDistance", 0.4f, new BepInEx.Configuration.ConfigDescription("Fraction of mecha build distance to perform clearing.", new BepInEx.Configuration.AcceptableValueRange<float>(0, 1)));
             configEnableClearingWhileDrifting = Config.Bind<bool>("Config", "ClearWhileDrifting", true, "This flag can be used to enable/disable clearing while drifing over oceans.");
             configEnableClearingWhileFlying = Config.Bind<bool>("Config", "ClearWhileFlying", false, "This flag can be used to enable/disable clearing while flying.");
             configEnableRecallWhileFlying = Config.Bind<bool>("Config", "RecallWhileFlying", true, "Enable this feature if you want drones assigned to clearing to be recalled when Icarus is flying. (This setting is only used if configEnableClearingWhileFlying is false.)");
             configReservedInventorySpace = Config.Bind<uint>("Config", "InventorySpace", 10, "Initiate clearing when there are this number of inventory spaces empty.  (Setting has no impact if CollectResources is false.)");
-            configReservedPower = Config.Bind<float>("Config", "PowerReserve", 0.4f, "Initiate clearing only when there is at least this fraction of Icarus's power remaining.");
+            configReservedPower = Config.Bind<float>("Config", "PowerReserve", 0.4f, new BepInEx.Configuration.ConfigDescription("Initiate clearing only when there is at least this fraction of Icarus's power remaining.", new BepInEx.Configuration.AcceptableValueRange<float>(0, 1)));
             configSpeedScaleFactor = Config.Bind<float>("Config", "SpeedScale", 1.0f, "Is this mod so great that it feels too much like cheating?  Slow the drones down with this setting.  They normally operate at the same speed as Icarus.  Too slow?  You can cheat too by setting a value greater than 1.");
             configEnableInstantClearing = Config.Bind<bool>("Config", "DSPCheats_InstantClearing", false, "If the DSP Cheats mod is installed, and Instant-Build is enabled, should this mod work with that one and instantly clear?");
             configEnableDebug = Config.Bind<bool>("Config", "EnableDebug", false, "Enabling debug will add more feedback to the BepInEx console.  This includes the reasons why drones are not clearing.");
@@ -396,6 +388,7 @@ namespace DysonSphereDroneClearing
 
             OnConfigReload();
             Config.ConfigReloaded += OnConfigReload;
+            Config.SettingChanged += OnConfigSettingChanged;
         }
 
         public static void OnConfigReload(object sender, EventArgs e)
@@ -409,26 +402,64 @@ namespace DysonSphereDroneClearing
             configLimitClearingDistance.Value = Math.Max(configLimitClearingDistance.Value, 0.0f);
             configSpeedScaleFactor.Value = Math.Max(configSpeedScaleFactor.Value, 0.0f);
 
-            configDisableClearingItemIds_ShortArray = configDisableClearingItemIds_StringConfigEntry.Value.Split(',').Select(s => short.TryParse(s, out short n) ? n : (short)0).ToArray();
-            if (configDisableClearingItemIds_ShortArray.Length == 1 && configDisableClearingItemIds_ShortArray[0] == 0)
-            {
-                configDisableClearingItemIds_ShortArray = new short[] { };
-            }
-
-            foreach (short protoId in configDisableClearingItemIds_ShortArray)
-            {
-                VegeProto vegeProto = LDB.veges.Select((int)protoId);
-                if (vegeProto == null)
-                {
-                    Logger.LogError($"ERROR: Configured vege proto ID {protoId} is invalid.  Recommend removing this ID from the config file.");
-                }
-                else
-                {
-                    Logger.LogInfo($"Configured to block vege proto ID {protoId} for {vegeProto.Name.Translate()}");
-                }
-            }
+            OnConfigDisableItemIdsChanged();
+            OnConfigEnableChanged();
 
             Logger.LogInfo("Configuration loaded.");
+        }
+
+        public static void OnConfigSettingChanged(object sender, BepInEx.Configuration.SettingChangedEventArgs e)
+        {
+            BepInEx.Configuration.ConfigDefinition changedSetting = e.ChangedSetting.Definition;
+            if (changedSetting.Section == "Config" && changedSetting.Key == "Enable")
+            {
+                OnConfigEnableChanged();
+            }
+            else if (changedSetting.Section == "Items" && changedSetting.Key == "DisableItemIds")
+            {
+                OnConfigDisableItemIdsChanged();
+            }
+        }
+
+        public static void OnConfigEnableChanged()
+        {
+            if (enableDisableButton != null)
+            {
+                if (!configEnableMod.Value)
+                {
+                    clearDroneTaskingOnNextTick = true;
+                }
+
+                enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod.Value ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
+                enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
+                    configEnableMod.Value ? enabledSprite : disabledSprite;
+                UpdateTipText("");
+            }
+        }
+
+        public static void OnConfigDisableItemIdsChanged()
+        {
+            if (configDisableClearingItemIds_StringConfigEntry != null)
+            {
+                configDisableClearingItemIds_ShortArray = configDisableClearingItemIds_StringConfigEntry.Value.Split(',').Select(s => short.TryParse(s, out short n) ? n : (short)0).ToArray();
+                if (configDisableClearingItemIds_ShortArray.Length == 1 && configDisableClearingItemIds_ShortArray[0] == 0)
+                {
+                    configDisableClearingItemIds_ShortArray = new short[] { };
+                }
+
+                foreach (short protoId in configDisableClearingItemIds_ShortArray)
+                {
+                    VegeProto vegeProto = LDB.veges.Select((int)protoId);
+                    if (vegeProto == null)
+                    {
+                        Logger.LogError($"ERROR: Configured vege proto ID {protoId} is invalid.  Recommend removing this ID from the config file.");
+                    }
+                    else
+                    {
+                        Logger.LogInfo($"Configured to block vege proto ID {protoId} for {vegeProto.Name.Translate()}");
+                    }
+                }
+            }
         }
 
         // This patch is for compatability with Windows10CE's DSP Cheats' Instant-Build feature.
