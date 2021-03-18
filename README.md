@@ -28,6 +28,7 @@ Settings include
  - Control over clearing of rocks, trees, small rocks and ice.
  - Control over planet types clearing is performed on.
  - Control the drone clearing speed.  Default is to clear at Icarus' mining speed.
+ - Progress circle color.
 
 ![Config Settings Window image](https://raw.githubusercontent.com/GreyHak/dsp-drone-clearing/master/ConfigSettingsWindow.jpg)
 
@@ -58,6 +59,7 @@ The source code for this mod is available for download, review and forking on Gi
 ## Change Log
 ### v1.3.0
  - Drone clearing assignments will now be shown as soon as they're assigned.  You no longer need to wait until mining begins.
+ - The progress circle color is now configurable.
 ### v1.2.14
  - Improved in-game configuration changes by improving compatibility with [BepInEx.ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager).
 ### v1.2.13
