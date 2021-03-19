@@ -57,6 +57,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.4.0
+ - Drone torches with sparks.  This took me hours of work.  I hope someone appreciates it.
 ### v1.3.0
  - Drone clearing assignments will now be shown as soon as they're assigned.  You no longer need to wait until mining begins.
  - The progress circle color is now configurable.
