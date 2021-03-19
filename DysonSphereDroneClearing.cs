@@ -19,12 +19,12 @@ using System.IO;
 using BepInEx.Logging;
 using System.Security;
 using System.Reflection;
-//using System.Security.Permissions;
+using System.Security.Permissions;
 
-//[module: UnverifiableCode]
-//#pragma warning disable CS0618 // Type or member is obsolete
-//[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
-//#pragma warning restore CS0618 // Type or member is obsolete
+[module: UnverifiableCode]
+#pragma warning disable CS0618 // Type or member is obsolete
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+#pragma warning restore CS0618 // Type or member is obsolete
 namespace DysonSphereDroneClearing
 {
     [BepInPlugin(pluginGuid, pluginName, pluginVersion)]
@@ -173,6 +173,7 @@ namespace DysonSphereDroneClearing
             public DroneAction_Mine mineAction = null;
             public CircleGizmo miningTargetGizmo = null;
             public bool miningFlag = false;
+            public ParticleSystem torchEffect = null;
         }
         public static List<DroneClearingMissionData> activeMissions = new List<DroneClearingMissionData> { };
 
@@ -490,6 +491,11 @@ namespace DysonSphereDroneClearing
                                 if (missionData.mineAction.miningType == EObjectType.Entity)
                                 {
                                     missionData.miningTargetGizmo.Close();
+                                    if (missionData.torchEffect != null && missionData.torchEffect.isPlaying)
+                                    {
+                                        missionData.torchEffect.Stop();
+                                        ParticleSystem.Destroy(missionData.torchEffect);
+                                    }
                                     activeMissions.RemoveAt(activeMissionIdx);
                                 }
                             }
@@ -739,7 +745,7 @@ namespace DysonSphereDroneClearing
                     };
 
                     // Reference PlayerContrGizmo.SetMiningTarget
-                    missionData.miningTargetGizmo = CircleGizmo.Create(3, vegeData.pos, vegeProto.CircleRadius * 1.19f);
+                    missionData.miningTargetGizmo = CircleGizmo.Create(3, vegeData.pos, vegeProto.CircleRadius * 1.19f);  // These get cleaned automatically.  There's no need for the mod to destroy them.
                     missionData.miningTargetGizmo.multiplier = 2.5f;
                     missionData.miningTargetGizmo.alphaMultiplier = 0.15f;  // Assigned, but not mining
                     missionData.miningTargetGizmo.fadeInScale = 1.3f;
@@ -785,6 +791,11 @@ namespace DysonSphereDroneClearing
                             {
                                 // Clearing completed
                                 missionData.miningTargetGizmo.Close();
+                                if (missionData.torchEffect != null && missionData.torchEffect.isPlaying)
+                                {
+                                    missionData.torchEffect.Stop();
+                                    ParticleSystem.Destroy(missionData.torchEffect);
+                                }
                                 activeMissions.RemoveAt(activeMissionIdx);
                                 factory.RemovePrebuildData(prebuildId);
                             }
@@ -797,19 +808,40 @@ namespace DysonSphereDroneClearing
                                     {
                                         Logger.LogDebug("Item already mined.");
                                         missionData.miningTargetGizmo.Close();
+                                        if (missionData.torchEffect != null && missionData.torchEffect.isPlaying)
+                                        {
+                                            missionData.torchEffect.Stop();
+                                            ParticleSystem.Destroy(missionData.torchEffect);
+                                        }
                                         activeMissions.RemoveAt(activeMissionIdx);
                                         factory.RemovePrebuildData(prebuildId);
                                     }
                                     else
                                     {
-                                        missionData.miningFlag = true;
-                                        missionData.miningTargetGizmo.alphaMultiplier = 1f;
+                                        if (!missionData.miningFlag)
+                                        {
+                                            missionData.miningFlag = true;
+                                            missionData.miningTargetGizmo.alphaMultiplier = 1f;
+                                            missionData.torchEffect = Instantiate(
+                                                GameMain.mainPlayer.effect.torchEffect,
+                                                __instance.position,
+                                                Quaternion.LookRotation(__instance.forward, __instance.position.normalized));
+                                            ParticleSystem spark = missionData.torchEffect.transform.Find("spark").GetComponent< ParticleSystem>();
+                                            ParticleSystem.MainModule sparkMain = spark.main;
+                                            sparkMain.startLifetime = 0.7f;  // 0.5 is too small.  1.0 is too much.
+                                            missionData.torchEffect.Play();
+                                        }
                                         __result = 0;
                                     }
                                 }
                                 else
                                 {
                                     missionData.miningTargetGizmo.Close();
+                                    if (missionData.torchEffect != null && missionData.torchEffect.isPlaying)
+                                    {
+                                        missionData.torchEffect.Stop();
+                                        ParticleSystem.Destroy(missionData.torchEffect);
+                                    }
                                     activeMissions.RemoveAt(activeMissionIdx);
                                     factory.RemovePrebuildData(prebuildId);
                                     factory.RemoveVegeWithComponents(prebuild.upEntity);
@@ -834,13 +866,21 @@ namespace DysonSphereDroneClearing
                     }
                 }
             }
-            foreach (DroneClearingMissionData mission in activeMissions)
-                mission.miningTargetGizmo.Close();
+            foreach (DroneClearingMissionData missionData in activeMissions)
+            {
+                missionData.miningTargetGizmo.Close();
+                if (missionData.torchEffect != null && missionData.torchEffect.isPlaying)
+                {
+                    missionData.torchEffect.Stop();
+                    ParticleSystem.Destroy(missionData.torchEffect);
+                }
+            }
             activeMissions.Clear();
         }
 
         public static long lastDisplayTime = 0;
 
+        // This is called by PlayerController.GameTick
         [HarmonyPostfix, HarmonyPatch(typeof(PlayerAction_Mine), "GameTick")]
         public static void PlayerAction_Mine_GameTick_Postfix(long timei)
         {
@@ -862,12 +902,12 @@ namespace DysonSphereDroneClearing
                 }
             }
 
-            foreach (DroneClearingMissionData mission in activeMissions)
+            foreach (DroneClearingMissionData missionData in activeMissions)
             {
-                if (mission.miningFlag)
+                if (missionData.miningFlag)
                 {
-                    mission.mineAction.DroneGameTick();
-                    mission.miningTargetGizmo.percent = 1f - mission.mineAction.percent;
+                    missionData.mineAction.DroneGameTick();
+                    missionData.miningTargetGizmo.percent = 1f - missionData.mineAction.percent;
                 }
             }
         }
@@ -893,8 +933,15 @@ namespace DysonSphereDroneClearing
         [HarmonyPostfix, HarmonyPatch(typeof(GameData), "Destroy")]
         public static void GameData_Destroy_Postfix()
         {
-            foreach (DroneClearingMissionData mission in activeMissions)
-                mission.miningTargetGizmo.Close();
+            foreach (DroneClearingMissionData missionData in activeMissions)
+            {
+                missionData.miningTargetGizmo.Close();
+                if (missionData.torchEffect != null && missionData.torchEffect.isPlaying)
+                {
+                    missionData.torchEffect.Stop();
+                    ParticleSystem.Destroy(missionData.torchEffect);
+                }
+            }
             activeMissions.Clear();
         }
 
