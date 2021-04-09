@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.0";
+        public const string pluginVersion = "1.4.1";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -540,6 +540,23 @@ namespace DysonSphereDroneClearing
                     UpdateTipText("(Waiting while Sailing.)");
                     RecallClearingDrones();
                     return;
+                }
+
+                for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
+                {
+                    DroneClearingMissionData missionData = activeMissions[activeMissionIdx];
+                    PrebuildData prebuild = ___player.factory.prebuildPool[missionData.prebuildId];
+                    if (!__instance.serving.Contains(-prebuild.id))  // If not yet assigned...
+                    {
+                        float distanceToVege = Vector3.Distance(GameMain.mainPlayer.position, prebuild.pos);
+                        if (distanceToVege > GameMain.mainPlayer.mecha.buildArea)
+                        {
+                            //Logger.LogDebug($"{prebuild.id} unassigned and beyond build area.");
+                            missionData.miningTargetGizmo.Close();
+                            activeMissions.RemoveAt(activeMissionIdx--);
+                            GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                        }
+                    }
                 }
 
                 if (___player.movementState == EMovementState.Drift && !configEnableClearingWhileDrifting.Value)
