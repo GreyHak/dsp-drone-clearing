@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.1";
+        public const string pluginVersion = "1.4.2";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -164,7 +164,12 @@ namespace DysonSphereDroneClearing
 
         public static bool isDroneClearingPrebuild(PrebuildData prebuild)
         {
-            return prebuild.protoId == -1 && prebuild.modelId == 0 && prebuild.recipeId == -1;
+            return
+                prebuild.protoId == -1 &&
+                prebuild.colliderId == -1 &&
+                prebuild.pickOffset == -1 &&
+                prebuild.filterId == -1 &&
+                prebuild.recipeId == -1;
         }
 
         public class DroneClearingMissionData
@@ -482,7 +487,7 @@ namespace DysonSphereDroneClearing
                     if (configEnableInstantClearing.Value)
                     {
                         player.factory.RemovePrebuildData(prebuildId);
-                        player.factory.RemoveVegeWithComponents(prebuild.upEntity);
+                        player.factory.RemoveVegeWithComponents(prebuild.modelId);
                         for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
                         {
                             DroneClearingMissionData missionData = activeMissions[activeMissionIdx];
@@ -712,7 +717,7 @@ namespace DysonSphereDroneClearing
                             bool vegeBeingProcessedFlag = false;
                             foreach (PrebuildData prebuild in ___player.factory.prebuildPool)
                             {
-                                if (isDroneClearingPrebuild(prebuild) && prebuild.upEntity == vegeData.id)
+                                if (isDroneClearingPrebuild(prebuild) && prebuild.modelId == vegeData.id)
                                 {
                                     vegeBeingProcessedFlag = true;
                                     break;
@@ -739,10 +744,11 @@ namespace DysonSphereDroneClearing
 
                     PrebuildData prebuild = default;
                     prebuild.protoId = -1;
-                    prebuild.modelId = 0;  // Saves always open as 0
+                    prebuild.colliderId = -1;
+                    prebuild.pickOffset = -1;
+                    prebuild.filterId = -1;
                     prebuild.recipeId = -1;
-                    prebuild.refCount = 0;
-                    prebuild.upEntity = vegeData.id;
+                    prebuild.modelId = vegeData.id;
                     prebuild.pos = prebuild.pos2 = vegeData.pos;
                     prebuild.rot = vegeData.rot;
 
@@ -820,7 +826,7 @@ namespace DysonSphereDroneClearing
                             {
                                 if (configCollectResourcesFlag.Value)
                                 {
-                                    VegeData vegeData = factory.vegePool[prebuild.upEntity];
+                                    VegeData vegeData = factory.vegePool[prebuild.modelId];
                                     if (vegeData.id == 0)
                                     {
                                         Logger.LogDebug("Item already mined.");
@@ -861,7 +867,7 @@ namespace DysonSphereDroneClearing
                                     }
                                     activeMissions.RemoveAt(activeMissionIdx);
                                     factory.RemovePrebuildData(prebuildId);
-                                    factory.RemoveVegeWithComponents(prebuild.upEntity);
+                                    factory.RemoveVegeWithComponents(prebuild.modelId);
                                 }
                             }
                             return;
