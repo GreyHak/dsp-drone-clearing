@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.2";
+        public const string pluginVersion = "1.4.3";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -944,6 +944,7 @@ namespace DysonSphereDroneClearing
                 // gets uninstalled in which case it causes the game to issue an error.
                 //Logger.LogInfo("Preventing saving of drone clearing prebuild.");
                 PrebuildData generic = default;
+                generic.id = __instance.id;
                 generic.Export(w);
                 return false;
             }
