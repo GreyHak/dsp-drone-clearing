@@ -57,6 +57,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.4.4
+ - Clearing will now count towards achievement statistics.
 ### v1.4.3
  - Save games will now work again with Dyson Sphere Program 0.8.22.8915 update.
 ### v1.4.2

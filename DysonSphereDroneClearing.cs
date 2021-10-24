@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.3";
+        public const string pluginVersion = "1.4.4";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -124,8 +124,10 @@ namespace DysonSphereDroneClearing
                                 int minedItemCount = (int)((float)vegeProto.MiningCount[itemIdx] * (vegeData.scl.y * vegeData.scl.y) + 0.5f);
                                 if (minedItemCount > 0 && LDB.items.Select(minedItem) != null)
                                 {
-                                    int inventoryOverflowCount = this.player.package.AddItemStacked(minedItem, minedItemCount);
-                                    if (inventoryOverflowCount != 0)
+                                    int inventoryOverflowCount = this.player.TryAddItemToPackage(minedItem, minedItemCount, true, 0);
+                                    GameMain.statistics.production.factoryStatPool[factory.index].AddProductionToTotalArray(minedItem, minedItemCount);
+                                    GameMain.mainPlayer.controller.gameData.history.AddFeatureValue(2150000 + minedItem, minedItemCount);
+                                    if (inventoryOverflowCount > 0)
                                     {
                                         UIItemup.Up(minedItem, inventoryOverflowCount);
                                         UIRealtimeTip.PopupItemGet(minedItem, inventoryOverflowCount, vegeData.pos + vegeData.pos.normalized, popupQueueIndex++);
