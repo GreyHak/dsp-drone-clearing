@@ -33,7 +33,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.5";
+        public const string pluginVersion = "1.4.6";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -488,7 +488,7 @@ namespace DysonSphereDroneClearing
                 {   // This will never happen unless DSP Cheats' Instant-Build feature is enabled.  So, let's do what it's telling us to.
                     if (configEnableInstantClearing.Value)
                     {
-                        player.factory.RemovePrebuildData(prebuildId);
+                        player.factory.RemovePrebuildWithComponents(prebuildId);
                         player.factory.RemoveVegeWithComponents(prebuild.modelId);
                         for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
                         {
@@ -561,7 +561,7 @@ namespace DysonSphereDroneClearing
                             //Logger.LogDebug($"{prebuild.id} unassigned and beyond build area.");
                             missionData.miningTargetGizmo.Close();
                             activeMissions.RemoveAt(activeMissionIdx--);
-                            GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                            GameMain.mainPlayer.factory.RemovePrebuildWithComponents(prebuild.id);
                         }
                     }
                 }
@@ -822,7 +822,7 @@ namespace DysonSphereDroneClearing
                                     ParticleSystem.Destroy(missionData.torchEffect);
                                 }
                                 activeMissions.RemoveAt(activeMissionIdx);
-                                factory.RemovePrebuildData(prebuildId);
+                                factory.RemovePrebuildWithComponents(prebuildId);
                             }
                             else
                             {
@@ -839,7 +839,7 @@ namespace DysonSphereDroneClearing
                                             ParticleSystem.Destroy(missionData.torchEffect);
                                         }
                                         activeMissions.RemoveAt(activeMissionIdx);
-                                        factory.RemovePrebuildData(prebuildId);
+                                        factory.RemovePrebuildWithComponents(prebuildId);
                                     }
                                     else
                                     {
@@ -868,7 +868,7 @@ namespace DysonSphereDroneClearing
                                         ParticleSystem.Destroy(missionData.torchEffect);
                                     }
                                     activeMissions.RemoveAt(activeMissionIdx);
-                                    factory.RemovePrebuildData(prebuildId);
+                                    factory.RemovePrebuildWithComponents(prebuildId);
                                     factory.RemoveVegeWithComponents(prebuild.modelId);
                                 }
                             }
@@ -887,7 +887,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (isDroneClearingPrebuild(prebuild))
                     {
-                        GameMain.mainPlayer.factory.RemovePrebuildData(prebuild.id);
+                        GameMain.mainPlayer.factory.RemovePrebuildWithComponents(prebuild.id);
                     }
                 }
             }
