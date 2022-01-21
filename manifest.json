@@ -1,6 +1,6 @@
 {
     "name": "DSP_Drone_Clearing",
-    "version_number": "1.4.6",
+    "version_number": "1.4.7",
     "website_url": "https://github.com/GreyHak/dsp-drone-clearing",
     "description": "Use mecha drones to clear trees and stones. Easily toggle on/off with HUD button.",
     "dependencies": [
