@@ -29,11 +29,12 @@ namespace DysonSphereDroneClearing
 {
     [BepInPlugin(pluginGuid, pluginName, pluginVersion)]
     [BepInProcess("DSPGAME.exe")]
+    [BepInProcess("Dyson Sphere Program.exe")]
     public class DysonSphereDroneClearing : BaseUnityPlugin
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.8";
+        public const string pluginVersion = "1.4.9";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;

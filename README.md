@@ -57,6 +57,8 @@ This mod can also be installed using ebkr's [r2modman](https://dsp.thunderstore.
 The source code for this mod is available for download, review and forking on GitHub [here](https://github.com/GreyHak/dsp-drone-clearing) under the BSD 3 clause license.
 
 ## Change Log
+### v1.4.9
+ - Xbox compatibility.
 ### v1.4.8
  - Fixed a bug which was giving proliferator bonuses to items mined by the drones.
 ### v1.4.7
