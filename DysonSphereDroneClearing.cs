@@ -51,9 +51,7 @@ namespace DysonSphereDroneClearing
         public static BepInEx.Configuration.ConfigEntry<float> configSpeedScaleFactor;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableInstantClearing;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableDebug;
-        public static BepInEx.Configuration.ConfigEntry<float> configProgressColor_Red;
-        public static BepInEx.Configuration.ConfigEntry<float> configProgressColor_Green;
-        public static BepInEx.Configuration.ConfigEntry<float> configProgressColor_Blue;
+        public static BepInEx.Configuration.ConfigEntry<Color> configProgressColor;
 
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemTree;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingItemStone;
@@ -306,6 +304,7 @@ namespace DysonSphereDroneClearing
         public void InitialConfigSetup()
         {
             bool configFileContainsOldFlagsFlag = false;
+            bool configFileContainsOldColorFlag = false;
             FieldInfo[] fields = typeof(BepInEx.Configuration.ConfigFile).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (FieldInfo field in fields)
             {
@@ -320,10 +319,11 @@ namespace DysonSphereDroneClearing
                             configFileContainsOldFlagsFlag = true;
                             break;
                         }
-                    }
-                    if (configFileContainsOldFlagsFlag)
-                    {
-                        break;
+                        if (key.Section == "Config" && key.Key == "ProgressColor_Red")
+                        {
+                            configFileContainsOldColorFlag = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -342,9 +342,7 @@ namespace DysonSphereDroneClearing
             configEnableDebug = Config.Bind<bool>("Config", "EnableDebug", false, "Enabling debug will add more feedback to the BepInEx console.  This includes the reasons why drones are not clearing.");
 
             // Color from Configs.builtin.gizmoColors[2] = {1, 0.7052167, 0}, but it hasn't been loaded yet.
-            configProgressColor_Red = Config.Bind<float>("Config", "ProgressColor_Red", 1.0f, new BepInEx.Configuration.ConfigDescription("The color of the clearing progress circle (red component).", new BepInEx.Configuration.AcceptableValueRange<float>(0, 1)));
-            configProgressColor_Green = Config.Bind<float>("Config", "ProgressColor_Green", 0.7052167f, new BepInEx.Configuration.ConfigDescription("The color of the clearing progress circle (green component).", new BepInEx.Configuration.AcceptableValueRange<float>(0, 1)));
-            configProgressColor_Blue = Config.Bind<float>("Config", "ProgressColor_Blue", 0.0f, new BepInEx.Configuration.ConfigDescription("The color of the clearing progress circle (blue component).", new BepInEx.Configuration.AcceptableValueRange<float>(0, 1)));
+            configProgressColor = Config.Bind<Color>("Config", "ProgressColor", new Color(1.0f, 0.7052167f, 0.0f), new BepInEx.Configuration.ConfigDescription("The color of the clearing progress circle."));
 
             configEnableClearingItemTree = Config.Bind<bool>("Items", "IncludeTrees", true, "Enabling clearing of trees.");
             configEnableClearingItemStone = Config.Bind<bool>("Items", "IncludeStone", true, "Enabling clearing of stones which can block the mecha's movement.");
@@ -398,6 +396,20 @@ namespace DysonSphereDroneClearing
                 Config.Remove(configEnableClearingPlanetOcean.Definition);
                 Config.Remove(configEnableClearingPlanetDesert.Definition);
                 Config.Remove(configEnableClearingPlanetIce.Definition);
+
+                Config.Save();
+            }
+            if (configFileContainsOldColorFlag)
+            {
+                BepInEx.Configuration.ConfigEntry<float> configProgressColor_Red = Config.Bind<float>("Config", "ProgressColor_Red", 1.0f, "<Obsolete>");
+                BepInEx.Configuration.ConfigEntry<float> configProgressColor_Green = Config.Bind<float>("Config", "ProgressColor_Green", 0.7052167f, "<Obsolete>");
+                BepInEx.Configuration.ConfigEntry<float> configProgressColor_Blue = Config.Bind<float>("Config", "ProgressColor_Blue", 0.0f, "<Obsolete>");
+
+                configProgressColor.Value = new Color(configProgressColor_Red.Value, configProgressColor_Green.Value, configProgressColor_Blue.Value);
+
+                Config.Remove(configProgressColor_Red.Definition);
+                Config.Remove(configProgressColor_Green.Definition);
+                Config.Remove(configProgressColor_Blue.Definition);
 
                 Config.Save();
             }
@@ -777,7 +789,7 @@ namespace DysonSphereDroneClearing
                     missionData.miningTargetGizmo.fadeInScale = 1.3f;
                     missionData.miningTargetGizmo.fadeInTime = 0.13f;
                     missionData.miningTargetGizmo.fadeInFalloff = 0.5f;
-                    missionData.miningTargetGizmo.color = new Color(configProgressColor_Red.Value, configProgressColor_Green.Value, configProgressColor_Blue.Value); // Configs.builtin.gizmoColors[2]
+                    missionData.miningTargetGizmo.color = configProgressColor.Value; // Configs.builtin.gizmoColors[2]
                     missionData.miningTargetGizmo.rotateSpeed = 0f;
                     missionData.miningTargetGizmo.Open();
 
