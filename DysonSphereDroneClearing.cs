@@ -583,7 +583,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping because player model is hidden.  This is needed for compatability with the Render Distance mod.");
+                        Logger.LogDebug("Skipping because player model is hidden.  This is needed for compatability with the Render Distance mod.");
                     }
                     enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Player hidden.)");
@@ -594,7 +594,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping because mod is disabled.");
+                        Logger.LogDebug("Skipping because mod is disabled.");
                     }
                     return;
                 }
@@ -603,7 +603,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping because movement state is Sail.");
+                        Logger.LogDebug("Skipping because movement state is Sail.");
                     }
                     enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Waiting while Sailing.)");
@@ -632,7 +632,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping while drifting.");
+                        Logger.LogDebug("Skipping while drifting.");
                     }
                     enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Waiting while Drifting.)");
@@ -645,13 +645,13 @@ namespace DysonSphereDroneClearing
                     {
                         if (configEnableDebug.Value)
                         {
-                            Logger.LogInfo("Recalling drones.");
+                            Logger.LogDebug("Recalling drones.");
                         }
                         RecallClearingDrones();
                     }
                     else if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping while flying.");
+                        Logger.LogDebug("Skipping while flying.");
                     }
                     enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Waiting while Flying.)");
@@ -662,7 +662,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping because of insufficient mecha energy to eject a drone.");
+                        Logger.LogDebug("Skipping because of insufficient mecha energy to eject a drone.");
                     }
                     enableSubstate = Substate.ENERGY;
                     UpdateTipText("(Waiting for ejection energy.)");
@@ -689,7 +689,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping planet type " + ___player.planetData.typeString);
+                        Logger.LogDebug($"Skipping planet type {___player.planetData.typeString}");
                     }
                     enableSubstate = Substate.PLANET;
                     UpdateTipText("(Waiting on this planet type.)");
@@ -701,10 +701,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        var sbc = new StringBuilder();
-                        sbc.AppendFormat("Skipping due to number of drone assignments: totalDroneTaskingCount={0}, configMaxClearingDroneCount={1}, player.mecha.droneCount={2}, player.mecha.idleDroneCount={3}",
-                            totalDroneTaskingCount, configMaxClearingDroneCount, ___player.mecha.droneCount, ___player.mecha.idleDroneCount);
-                        Logger.LogInfo(sbc.ToString());
+                        Logger.LogDebug($"Skipping due to number of drone assignments: totalDroneTaskingCount={totalDroneTaskingCount}, configMaxClearingDroneCount={configMaxClearingDroneCount}, player.mecha.droneCount={___player.mecha.droneCount}, player.mecha.idleDroneCount={___player.mecha.idleDroneCount}");
                     }
                     enableSubstate = Substate.NORMAL;
                     UpdateTipText("(Available drones assigned.)");
@@ -715,7 +712,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("Skipping due to low power.");
+                        Logger.LogDebug("Skipping due to low power.");
                     }
                     enableSubstate = Substate.ENERGY;
                     UpdateTipText("(Waiting for energy.)");
@@ -736,7 +733,7 @@ namespace DysonSphereDroneClearing
                     {
                         if (configEnableDebug.Value)
                         {
-                            Logger.LogInfo("Too few inventory slots");
+                            Logger.LogDebug("Too few inventory slots");
                         }
                         enableSubstate = Substate.INVENTORY;
                         UpdateTipText("(Waiting for inventory space.)");
@@ -809,9 +806,7 @@ namespace DysonSphereDroneClearing
                     VegeData vegeData = ___player.factory.vegePool[closestVegeId];
                     VegeProto vegeProto = LDB.veges.Select((int)vegeData.protoId);
 
-                    //var sb = new StringBuilder();
-                    //sb.AppendFormat("Initiating mining of {0} to get {1} at power level {2}", vegeProto.Type.ToString(), LDB.items.Select(vegeProto.MiningItem[0]).name, ___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap);
-                    //Logger.LogInfo(sb.ToString());
+                    //Logger.LogDebug($"Initiating mining of {vegeProto.Type.ToString()} to get {LDB.items.Select(vegeProto.MiningItem[0]).name} at power level {___player.mecha.coreEnergy / ___player.mecha.coreEnergyCap}");
 
                     PrebuildData prebuild = default;
                     prebuild.protoId = -1;
@@ -857,7 +852,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogInfo("No enabled items within configured distance.");
+                        Logger.LogDebug("No enabled items within configured distance.");
                     }
                     enableSubstate = Substate.RANGE;
                     UpdateTipText("(No more items in range.)");
@@ -989,10 +984,7 @@ namespace DysonSphereDroneClearing
             {
                 if (timei > lastDisplayTime + 30 || timei < lastDisplayTime)
                 {
-                    var sb = new StringBuilder();
-                    sb.AppendFormat("{0} drone tasks. {1} active missions.", getTotalDroneTaskingCount(), activeMissions.Count);
-                    Logger.LogInfo(sb.ToString());
-
+                    Logger.LogDebug($"{getTotalDroneTaskingCount()} drone tasks. {activeMissions.Count} active missions.");
                     lastDisplayTime = timei;
                 }
             }
