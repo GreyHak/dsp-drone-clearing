@@ -175,7 +175,6 @@ namespace DysonSphereDroneClearing
         {
             return
                 prebuild.protoId == -1 &&
-                prebuild.colliderId == -1 &&
                 prebuild.pickOffset == -1 &&
                 prebuild.filterId == -1 &&
                 prebuild.recipeId == -1;
@@ -524,17 +523,17 @@ namespace DysonSphereDroneClearing
 
         // This patch is for compatability with Windows10CE's DSP Cheats' Instant-Build feature.
         [HarmonyPrefix, HarmonyPatch(typeof(PlanetFactory), "BuildFinally")]
-        public static bool PlanetFactory_BuildFinally_Prefix(Player player, int prebuildId)
+        public static bool PlanetFactory_BuildFinally_Prefix(PlanetFactory __instance, Player player, int prebuildId, bool autoRefresh = true)
         {
-            if (player.factory != null && prebuildId != 0)
+            if (prebuildId != 0)
             {
-                PrebuildData prebuild = player.factory.prebuildPool[prebuildId];
+                PrebuildData prebuild = __instance.prebuildPool[prebuildId];
                 if (isDroneClearingPrebuild(prebuild))
                 {   // This will never happen unless DSP Cheats' Instant-Build feature is enabled.  So, let's do what it's telling us to.
                     if (configEnableInstantClearing.Value)
                     {
-                        player.factory.RemovePrebuildWithComponents(prebuildId);
-                        player.factory.RemoveVegeWithComponents(prebuild.modelId);
+                        __instance.RemovePrebuildWithComponents(prebuildId);
+                        __instance.RemoveVegeWithComponents(prebuild.modelId);
                         for (int activeMissionIdx = 0; activeMissionIdx < activeMissions.Count; ++activeMissionIdx)
                         {
                             DroneClearingMissionData missionData = activeMissions[activeMissionIdx];
@@ -554,6 +553,21 @@ namespace DysonSphereDroneClearing
                         }
                     }
                     return false;
+                }
+                else if (prebuild.id == prebuildId)
+                {
+                    ItemProto itemProto = LDB.items.Select((int)prebuild.protoId);
+                    if (itemProto == null)
+                    {
+                        // This fixes a bad save where the drone is still operating after loading a save.
+                        // This should only happen for drones deployed when a save is loaded.
+                        // This is avoiding a big in the game where AddEntityDataWithComponents is called
+                        // and its return value is assumed to be valid, but it isn't it itemProto is null.
+                        // It's strange too because the game even checks itemProto for null before the call.
+                        Logger.LogWarning("Aborting drone clearing operation following a save load.  If this happens, it is likely that, if this save was loaded without this mod, it would cause an exception.");
+                        __instance.RemovePrebuildWithComponents(prebuildId);
+                        return false;
+                    }
                 }
             }
             return true;
@@ -801,7 +815,6 @@ namespace DysonSphereDroneClearing
 
                     PrebuildData prebuild = default;
                     prebuild.protoId = -1;
-                    prebuild.colliderId = -1;
                     prebuild.pickOffset = -1;
                     prebuild.filterId = -1;
                     prebuild.recipeId = -1;
@@ -1001,7 +1014,10 @@ namespace DysonSphereDroneClearing
             {
                 // Do not save drone clearing tasks.  This would work unless the mod
                 // gets uninstalled in which case it causes the game to issue an error.
-                //Logger.LogInfo("Preventing saving of drone clearing prebuild.");
+                if (configEnableDebug.Value)
+                {
+                    Logger.LogDebug($"Intercepted save of PrebuildData: id={__instance.id}, protoId={__instance.protoId}, colliderId={__instance.colliderId}");
+                }
                 PrebuildData generic = default;
                 generic.id = __instance.id;
                 generic.Export(w);
@@ -1011,6 +1027,30 @@ namespace DysonSphereDroneClearing
             {
                 return true;
             }
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(MechaDrone), "Export")]
+        public static bool MechaDrone_Export_Prefix(MechaDrone __instance, BinaryWriter w)
+        {
+            int prebuildId = -__instance.targetObject;
+            if (prebuildId != 0 && isDroneClearingPrebuild(GameMain.mainPlayer.factory.prebuildPool[prebuildId]))
+            {
+                // stage 1: mecha straight up, entering adds target to "serving"
+                // stage 2: to target and performing function, entering might add target to "serving" if there's another target
+                // stage 3: return to mecha, clears target
+                // stage 0: unassigned
+                if (configEnableDebug.Value)
+                {
+                    Logger.LogDebug($"Intercepted save of drone performing clearing. targetObject={__instance.targetObject}, stage={__instance.stage}");
+                }
+
+                // This should change only the copy of __instance for the purpose of the save, not the in-game drones themselves.
+                __instance.stage = 3;
+                __instance.targetObject = 0;
+                __instance.Export(w);
+                return false;
+            }
+            return true;
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(GameData), "Destroy")]

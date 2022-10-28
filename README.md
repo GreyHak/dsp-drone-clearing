@@ -59,6 +59,7 @@ The source code for this mod is available for download, review and forking on Gi
 ## Change Log
 ### v2.0.0
  - Redesigned the logic for determining how many drones are currently active.
+ - Save reloading was tested thoroughly when the mod first came out, but was not working well with the latest game.  This could cause exceptions when loading a game created while drones were clearing.  This has been fixed, and saves created while drones are deployed can be loaded by the game with or without this mod.  A fix has also been included to load games created with previous versions of the mod while drones were clearing so the exception does occur loading bad saves created with earlier versions of the mod.
  - Configurable colors for drone icon so users can see the clearing state at a glance.
  - Progress circle color is now configured as a color, not 3 color components.
 ### v1.4.9
