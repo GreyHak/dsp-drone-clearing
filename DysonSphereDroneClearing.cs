@@ -34,7 +34,7 @@ namespace DysonSphereDroneClearing
     {
         public const string pluginGuid = "greyhak.dysonsphereprogram.droneclearing";
         public const string pluginName = "DSP Drone Clearing";
-        public const string pluginVersion = "1.4.9";
+        public const string pluginVersion = "2.0.0";
         new internal static ManualLogSource Logger;
         new internal static BepInEx.Configuration.ConfigFile Config;
         Harmony harmony;
@@ -701,7 +701,7 @@ namespace DysonSphereDroneClearing
                 {
                     if (configEnableDebug.Value)
                     {
-                        Logger.LogDebug($"Skipping due to number of drone assignments: totalDroneTaskingCount={totalDroneTaskingCount}, configMaxClearingDroneCount={configMaxClearingDroneCount}, player.mecha.droneCount={___player.mecha.droneCount}, player.mecha.idleDroneCount={___player.mecha.idleDroneCount}");
+                        Logger.LogDebug($"Skipping due to number of drone assignments: totalDroneTaskingCount={totalDroneTaskingCount}, configMaxClearingDroneCount={configMaxClearingDroneCount.Value}, player.mecha.droneCount={___player.mecha.droneCount}, player.mecha.idleDroneCount={___player.mecha.idleDroneCount}");
                     }
                     enableSubstate = Substate.NORMAL;
                     UpdateTipText("(Available drones assigned.)");
@@ -1008,7 +1008,7 @@ namespace DysonSphereDroneClearing
                 // gets uninstalled in which case it causes the game to issue an error.
                 if (configEnableDebug.Value)
                 {
-                    Logger.LogDebug($"Intercepted save of PrebuildData: id={__instance.id}, protoId={__instance.protoId}, colliderId={__instance.colliderId}");
+                    Logger.LogDebug($"Intercepted save of PrebuildData: id={__instance.id}, protoId={__instance.protoId}");
                 }
                 PrebuildData generic = default;
                 generic.id = __instance.id;
@@ -1033,7 +1033,7 @@ namespace DysonSphereDroneClearing
                 // stage 0: unassigned
                 if (configEnableDebug.Value)
                 {
-                    Logger.LogDebug($"Intercepted save of drone performing clearing. targetObject={__instance.targetObject}, stage={__instance.stage}");
+                    Logger.LogDebug($"Intercepted save of drone performing clearing. -targetObject={-__instance.targetObject}, stage={__instance.stage}");
                 }
 
                 // This should change only the copy of __instance for the purpose of the save, not the in-game drones themselves.
