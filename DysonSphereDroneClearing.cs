@@ -197,22 +197,16 @@ namespace DysonSphereDroneClearing
             if (GameMain.mainPlayer != null &&
                 GameMain.mainPlayer.factory != null)  // A null GameMain.mainPlayer.factory is normal during the load screen.
             {
-                totalDroneTaskCount = GameMain.mainPlayer.mecha.droneLogic.serving.Count;
-
-                for (int i = 1; i < GameMain.mainPlayer.factory.prebuildCursor; i++)
+                for (int i = 0; i < GameMain.mainPlayer.mecha.droneCount; ++i)
                 {
-                    if (GameMain.mainPlayer.factory.prebuildPool[i].id == i)
+                    if (GameMain.mainPlayer.mecha.drones[i].stage != 0)
                     {
-                        if (!GameMain.mainPlayer.mecha.droneLogic.serving.Contains(-i))
-                        {
-                            totalDroneTaskCount++;  // These are queued, but not yet assigned
-                        }
+                        totalDroneTaskCount++;
                     }
                 }
-
                 if (configEnableDebug.Value)
                 {
-                    Logger.LogInfo(totalDroneTaskCount.ToString() + " tasked drone count made up of " + GameMain.mainPlayer.mecha.droneLogic.serving.Count.ToString() + " assigned and " + (totalDroneTaskCount - GameMain.mainPlayer.mecha.droneLogic.serving.Count).ToString() + " unassigned drones.");
+                    Logger.LogDebug($"{totalDroneTaskCount} active drones.");
                 }
             }
             return totalDroneTaskCount;
