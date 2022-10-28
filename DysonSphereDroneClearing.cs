@@ -74,6 +74,14 @@ namespace DysonSphereDroneClearing
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetRedStone;
         public static BepInEx.Configuration.ConfigEntry<bool> configEnableClearingPlanetVolcanicAsh;
 
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_enabled;
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_disabled;
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_energy;
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_inventory;
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_planet;
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_range;
+        public static BepInEx.Configuration.ConfigEntry<Color> configIconColor_player;
+
         // The following class was copied from PlayerAction_Mine
         public class DroneAction_Mine
         {
@@ -222,17 +230,19 @@ namespace DysonSphereDroneClearing
             harmony = new Harmony(pluginGuid);
             harmony.PatchAll(typeof(DysonSphereDroneClearing));
 
-            enabledSprite = GetSprite(new Color(0, 1, 0));  // Bright Green
-            //Sprite ingameDrone = Resources.Load<Sprite>("ui/textures/sprites/icons/drone-icon");
-            //enabledSprite = GameObject.Instantiate<Sprite>(ingameDrone);
-            disabledSprite = GetSprite(new Color(0.5f, 0.5f, 0.5f));  // Medium Grey
-
             Logger.LogInfo("Initialization complete.");
         }
 
+        public enum Substate { NORMAL, ENERGY, INVENTORY, PLANET, RANGE, PLAYER };
+        public static Substate enableSubstate = Substate.NORMAL;
         public static RectTransform enableDisableButton;
         public static Sprite enabledSprite;
         public static Sprite disabledSprite;
+        public static Sprite pausedSprite_energy;
+        public static Sprite pausedSprite_inventory;
+        public static Sprite pausedSprite_planet;
+        public static Sprite pausedSprite_range;
+        public static Sprite pausedSprite_player;
         public static bool clearDroneTaskingOnNextTick = false;
 
         [HarmonyPrefix, HarmonyPatch(typeof(GameMain), "Begin")]
@@ -254,8 +264,6 @@ namespace DysonSphereDroneClearing
                 enableDisableButton.SetParent(parent);
                 enableDisableButton.localScale = new Vector3(0.35f, 0.35f, 0.35f);
                 enableDisableButton.localPosition = new Vector3(referencePosition.x + 96f, referencePosition.y + 161f, referencePosition.z);
-                enableDisableButton.GetComponent<UIButton>().OnPointerDown(null);
-                enableDisableButton.GetComponent<UIButton>().OnPointerEnter(null);
                 enableDisableButton.GetComponent<UIButton>().button.onClick.AddListener(() =>
                 {
                     configEnableMod.Value = !configEnableMod.Value;
@@ -266,6 +274,14 @@ namespace DysonSphereDroneClearing
 
         public static void UpdateTipText(String details)
         {
+            enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
+                !configEnableMod.Value ? disabledSprite :
+                enableSubstate == Substate.ENERGY ? pausedSprite_energy :
+                enableSubstate == Substate.INVENTORY ? pausedSprite_inventory :
+                enableSubstate == Substate.PLANET ? pausedSprite_planet :
+                enableSubstate == Substate.RANGE ? pausedSprite_range :
+                enableSubstate == Substate.PLAYER ? pausedSprite_player :
+                enabledSprite;
             enableDisableButton.GetComponent<UIButton>().tips.tipText = configEnableMod.Value ? "Click to disable drone clearing" + "\n" + details : "Click to enable drone clearing";
             enableDisableButton.GetComponent<UIButton>().UpdateTip();
         }
@@ -364,6 +380,14 @@ namespace DysonSphereDroneClearing
             configEnableClearingPlanetRedStone = Config.Bind<bool>("Planets", "IncludeRedStone", true, "Enable clearing on red stone (mushroom) planets.");
             configEnableClearingPlanetVolcanicAsh = Config.Bind<bool>("Planets", "IncludeVolcanicAsh", true, "Enable clearing on volcanic ash planets.");
 
+            configIconColor_enabled = Config.Bind<Color>("IconColors", "EnabledNormal", Color.green, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when this mod is enabled and drones are functioning normally.  This state includes when no more drones are available because this happens constantly when drones are deployed for clearing."));
+            configIconColor_disabled = Config.Bind<Color>("IconColors", "Disabled", Color.grey, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when this mod is disabled."));
+            configIconColor_energy = Config.Bind<Color>("IconColors", "PausedEnergy", Color.green, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when drones require more energy to function."));
+            configIconColor_inventory = Config.Bind<Color>("IconColors", "PausedInventory", Color.green, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when drones are paused due to the lack of inventory space."));
+            configIconColor_planet = Config.Bind<Color>("IconColors", "PausedPlanet", Color.green, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when drones are paused on the current planet type per configuration.  See configuration settings for planets."));
+            configIconColor_range = Config.Bind<Color>("IconColors", "PausedRange", Color.green, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when the player is not within range of any clearable items.  See configuration settings of range and clearable items."));
+            configIconColor_player = Config.Bind<Color>("IconColors", "PausedPlayer", Color.green, new BepInEx.Configuration.ConfigDescription("The color of the drone icon when drones are paused due to the player's state.  See configuration items for drifting and flying."));
+
             // The following block of code handles converting from the v1.2.10 to v1.3.0 config settings.
             if (configFileContainsOldFlagsFlag)
             {
@@ -432,6 +456,7 @@ namespace DysonSphereDroneClearing
 
             OnConfigDisableItemIdsChanged();
             OnConfigEnableChanged();
+            OnConfigIconColorChanged();
 
             Logger.LogInfo("Configuration loaded.");
         }
@@ -447,6 +472,10 @@ namespace DysonSphereDroneClearing
             {
                 OnConfigDisableItemIdsChanged();
             }
+            else if (changedSetting.Section == "IconColors")
+            {
+                OnConfigIconColorChanged();
+            }
         }
 
         public static void OnConfigEnableChanged()
@@ -459,8 +488,6 @@ namespace DysonSphereDroneClearing
                 }
 
                 enableDisableButton.GetComponent<UIButton>().tips.tipTitle = configEnableMod.Value ? "Drone Clearing Enabled" : "Drone Clearing Disabled";
-                enableDisableButton.transform.Find("button-1/icon").GetComponent<Image>().sprite =
-                    configEnableMod.Value ? enabledSprite : disabledSprite;
                 UpdateTipText("");
             }
         }
@@ -488,6 +515,17 @@ namespace DysonSphereDroneClearing
                     }
                 }
             }
+        }
+
+        public static void OnConfigIconColorChanged()
+        {
+            enabledSprite = GetSprite(configIconColor_enabled.Value);
+            disabledSprite = GetSprite(configIconColor_disabled.Value);
+            pausedSprite_energy = GetSprite(configIconColor_energy.Value);
+            pausedSprite_inventory = GetSprite(configIconColor_inventory.Value);
+            pausedSprite_planet = GetSprite(configIconColor_planet.Value);
+            pausedSprite_range = GetSprite(configIconColor_range.Value);
+            pausedSprite_player = GetSprite(configIconColor_player.Value);
         }
 
         // This patch is for compatability with Windows10CE's DSP Cheats' Instant-Build feature.
@@ -530,6 +568,7 @@ namespace DysonSphereDroneClearing
         [HarmonyPrefix, HarmonyPatch(typeof(MechaDroneLogic), "UpdateTargets")]
         public static void MechaDroneLogic_UpdateTargets_Prefix(MechaDroneLogic __instance, Player ___player)
         {
+            enableSubstate = Substate.NORMAL;
             if (___player.factory != null)
             {
                 if (GameMain.data.hidePlayerModel)
@@ -538,6 +577,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping because player model is hidden.  This is needed for compatability with the Render Distance mod.");
                     }
+                    enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Player hidden.)");
                     return;
                 }
@@ -557,6 +597,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping because movement state is Sail.");
                     }
+                    enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Waiting while Sailing.)");
                     RecallClearingDrones();
                     return;
@@ -585,6 +626,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping while drifting.");
                     }
+                    enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Waiting while Drifting.)");
                     return;
                 }
@@ -603,6 +645,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping while flying.");
                     }
+                    enableSubstate = Substate.PLAYER;
                     UpdateTipText("(Waiting while Flying.)");
                     return;
                 }
@@ -613,6 +656,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping because of insufficient mecha energy to eject a drone.");
                     }
+                    enableSubstate = Substate.ENERGY;
                     UpdateTipText("(Waiting for ejection energy.)");
                     return;
                 }
@@ -639,6 +683,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping planet type " + ___player.planetData.typeString);
                     }
+                    enableSubstate = Substate.PLANET;
                     UpdateTipText("(Waiting on this planet type.)");
                     return;
                 }
@@ -653,6 +698,7 @@ namespace DysonSphereDroneClearing
                             totalDroneTaskingCount, configMaxClearingDroneCount, ___player.mecha.droneCount, ___player.mecha.idleDroneCount);
                         Logger.LogInfo(sbc.ToString());
                     }
+                    enableSubstate = Substate.NORMAL;
                     UpdateTipText("(Available drones assigned.)");
                     return;
                 }
@@ -663,6 +709,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("Skipping due to low power.");
                     }
+                    enableSubstate = Substate.ENERGY;
                     UpdateTipText("(Waiting for energy.)");
                     return;
                 }
@@ -683,6 +730,7 @@ namespace DysonSphereDroneClearing
                         {
                             Logger.LogInfo("Too few inventory slots");
                         }
+                        enableSubstate = Substate.INVENTORY;
                         UpdateTipText("(Waiting for inventory space.)");
                         return;
                     }
@@ -795,6 +843,7 @@ namespace DysonSphereDroneClearing
 
                     activeMissions.Add(missionData);
 
+                    enableSubstate = Substate.NORMAL;
                     UpdateTipText("(Assigning drones.)");
                 }
                 else
@@ -803,6 +852,7 @@ namespace DysonSphereDroneClearing
                     {
                         Logger.LogInfo("No enabled items within configured distance.");
                     }
+                    enableSubstate = Substate.RANGE;
                     UpdateTipText("(No more items in range.)");
                 }
             }

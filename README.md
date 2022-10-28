@@ -58,6 +58,7 @@ The source code for this mod is available for download, review and forking on Gi
 
 ## Change Log
 ### v2.0.0
+ - Configurable colors for drone icon so users can see the clearing state at a glance.
  - Progress circle color is now configured as a color, not 3 color components.
 ### v1.4.9
  - Xbox compatibility.
